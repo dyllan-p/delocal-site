@@ -14,6 +14,9 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
   - Until launch, the public site is the holding page only.
   - All other pages carry placeholder copy, as
     `<p class="ph">[Placeholder: what goes here]</p>`.
+  - In docs Markdown, placeholder headings are
+    `## [Placeholder heading: …]`. The only real command in the docs is the
+    install command; other commands are `.ph` lines naming what they do.
   - Terminal examples are tagged "illustrative" and carry
     `data-illustrative`.
   - No stats, logos, testimonials or FAQ.
@@ -24,7 +27,8 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
   - No light theme, no toggle, no `prefers-color-scheme` queries, and no
     `data-theme` script. `:root` has `color-scheme: dark`.
   - Starlight's ThemeSelect and ThemeProvider are overridden with empty
-    components. Keep it that way.
+    components. Keep it that way. SiteTitle and SocialIcons are overridden
+    too, for the docs header (see "Docs" in DESIGN.md).
 - **Exact versions.** They are pinned with npm `save-exact` (see `.npmrc`),
   and the lockfile is committed. Upgrade deliberately, in its own PR.
 
