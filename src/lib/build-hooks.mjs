@@ -2,7 +2,9 @@
 //
 //  1. Publishes install/install.sh as dist/install, after checking it.
 //  2. Writes dist/_headers and dist/robots.txt for Cloudflare Workers.
-//  3. Checks the output matches the build mode (see verifyOutput).
+//  3. Checks the output matches the build mode (see verifyOutput). A
+//     production build also fails on placeholder copy and illustrative
+//     examples, naming each one.
 //
 // Any failed check throws, which fails the build.
 import { spawnSync } from "node:child_process";
@@ -192,9 +194,12 @@ async function verifyOutput(outDir, siteMode, siteEnv) {
   for (const file of files.filter((f) => f.endsWith(".html") || f.endsWith(".css"))) {
     const text = await readFile(path.join(outDir, file), "utf8");
     for (const url of externalResources(text)) problems.push(`${file} loads ${url} from another host`);
-    if (file.endsWith(".html")) problems.push(...checkIndexing(file, text));
-    if (siteEnv === "production" && file.endsWith(".html") && hasPlaceholder(text)) {
-      problems.push(`${file} has placeholder copy, which a production build must not ship`);
+    if (!file.endsWith(".html")) continue;
+    problems.push(...checkIndexing(file, text));
+    problems.push(...checkOrbitArtIds(file, text));
+    if (siteEnv === "production") {
+      for (const name of placeholders(text)) problems.push(`${file} has placeholder copy: ${name}`);
+      for (const name of illustrations(text)) problems.push(`${file} has an illustrative example: ${name}`);
     }
   }
 
@@ -241,14 +246,50 @@ function checkIndexing(file, html) {
   return problems;
 }
 
-// <p class="ph">[Placeholder: ...]</p>, or either half of it.
-function hasPlaceholder(html) {
-  if (html.includes("[Placeholder")) return true;
-  for (const match of html.matchAll(/\sclass\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi)) {
+// Names each placeholder a page still has: <p class="ph">[Placeholder: ...]</p>,
+// or either half of it. That is every "[Placeholder ...]" text, including in
+// attributes such as the meta description, and every element with class "ph"
+// whose text is not one.
+function placeholders(html) {
+  const names = [...html.matchAll(/\[Placeholder[^\]]*\]/g)].map(([text]) => text);
+  for (const match of html.matchAll(/<[a-z][^\s>]*\s[^>]*?\bclass\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))[^>]*>([^<]*)/gi)) {
     const value = match[1] ?? match[2] ?? match[3];
-    if (value.split(/\s+/).includes("ph")) return true;
+    if (value.split(/\s+/).includes("ph") && !match[4].trim().startsWith("[Placeholder")) {
+      names.push(`an element with class "ph" and no "[Placeholder" text: ${match[0].trim().slice(0, 120)}`);
+    }
   }
-  return false;
+  return countDuplicates(names.map(decodeEntities));
+}
+
+// Names each element marked data-illustrative (the terminal examples in
+// Terminal.astro), by its aria-label.
+function illustrations(html) {
+  const names = [...html.matchAll(/<[a-z][^>]*\sdata-illustrative\b[^>]*>/gi)].map(([tag]) => {
+    const label = /\saria-label\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag);
+    return label ? `"${decodeEntities(label[1] ?? label[2])}"` : tag.slice(0, 120);
+  });
+  return countDuplicates(names);
+}
+
+// Each OrbitArt on a page needs its own id, or their gradient ids clash.
+function checkOrbitArtIds(file, html) {
+  const ids = [...html.matchAll(/\sdata-orbit-art\s*=\s*"([^"]*)"/g)].map((match) => match[1]);
+  const repeated = [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+  return repeated.map((id) => `${file} has more than one OrbitArt with id "${id}"`);
+}
+
+// ["a", "b", "a"] -> ["a (2 times)", "b"]
+function countDuplicates(names) {
+  const counts = new Map();
+  for (const name of names) counts.set(name, (counts.get(name) ?? 0) + 1);
+  return [...counts].map(([name, n]) => (n > 1 ? `${name} (${n} times)` : name));
+}
+
+function decodeEntities(text) {
+  const named = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+  return text.replace(/&(?:#(\d+)|#x([0-9a-f]+)|(\w+));/gi, (entity, dec, hex, name) =>
+    dec ? String.fromCodePoint(Number(dec)) : hex ? String.fromCodePoint(parseInt(hex, 16)) : (named[name] ?? entity),
+  );
 }
 
 // Everything is self-hosted: nothing may load a script, stylesheet, font or

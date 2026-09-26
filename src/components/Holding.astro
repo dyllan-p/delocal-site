@@ -3,8 +3,8 @@
 // on the site. Matches the holding page in design/mockup.pdf.
 import { REPO_URL } from "../../site.config.mjs";
 import Base from "../layouts/Base.astro";
-import HoldingArt from "./HoldingArt.astro";
 import Mark from "./Mark.astro";
+import OrbitArt from "./OrbitArt.astro";
 
 const lede =
   "A file sync tool being built to keep one folder the same on all your Linux and macOS machines, over Tailscale.";
@@ -25,7 +25,7 @@ const lede =
       <p class="repo"><a href={REPO_URL}>{REPO_URL.replace(/^https:\/\//, "")}</a></p>
     </div>
     <div class="art">
-      <HoldingArt />
+      <OrbitArt id="holding" />
     </div>
   </main>
 </Base>

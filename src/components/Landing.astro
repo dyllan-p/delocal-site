@@ -1,62 +1,465 @@
 ---
-// The landing page for full mode. Only a skeleton for now: DESIGN.md
-// describes the sections from design/mockup.pdf, and each gets real copy
-// once the code does what it describes.
+// The landing page for full mode, laid out as page 1 of design/mockup.pdf.
+// Only what is true today is real copy: the status, the install command, the
+// repo links, the nav and the footer's line on the name. Everything that says
+// what delocal does is a placeholder, and the terminals are illustrative.
+// Both fail a production build until they are replaced (see DESIGN.md).
 import { REPO_URL } from "../../site.config.mjs";
 import Base from "../layouts/Base.astro";
+import InstallCommand from "./InstallCommand.astro";
 import Mark from "./Mark.astro";
+import OrbitArt from "./OrbitArt.astro";
+import Terminal, { type Line } from "./Terminal.astro";
+
+const heroTerminal: Line[] = [
+  [["path", "~/Sync"], " ", ["prompt", "❯"], " ", ["cmd", "delocal up"]],
+  [["dim", "tailnet   "], "connected as ", ["laptop", "laptop"]],
+  [["dim", "folder    "], "~/Sync, 1,204 files"],
+  [["dim", "peers     "], ["desk", "● desk"], "  ", ["nas", "● nas"]],
+  [["dim", "14:02:11  "], ["nas", "nas   "], "↓ photos/2026-09/ (38)"],
+  [["dim", "14:02:14  "], ["desk", "desk  "], "↑ thesis/draft-4.tex"],
+  [],
+  [["ok", "✓"], " ", ["cmd", "in sync with 2 peers"]],
+];
+
+const safetyTerminal: Line[] = [
+  [["path", "~/Sync"], " ", ["prompt", "❯"], " ", ["cmd", "delocal status"]],
+  [["ok", "✓"], " ", ["laptop", "laptop"], ", ", ["nas", "nas"], "   in sync"],
+  [["held", "■"], " ", ["desk", "desk"], "          ", ["held", "412 deletes held"]],
+  [],
+  ["  desk deleted 412 files in 9 seconds."],
+  ["  They have not spread to the others."],
+  [],
+  [["dim", "  keep them:  "], ["cmd", "delocal approve desk"]],
+  [["dim", "  undo them:  "], ["cmd", "delocal revert desk"]],
+];
 ---
 
 <Base title="delocal" description="[Placeholder: meta description]">
   <header class="nav">
-    <a class="brand" href="/">
-      <span class="brand-mark"><Mark /></span>
-      <span class="wordmark">delocal</span>
-    </a>
-    <nav aria-label="Main">
-      <a href="/docs/">Docs</a>
-      <a href={REPO_URL}>GitHub</a>
-    </nav>
+    <div class="nav-inner">
+      <a class="brand" href="/">
+        <span class="brand-mark"><Mark /></span>
+        <span class="wordmark">delocal</span>
+      </a>
+      <nav class="nav-links" aria-label="Main">
+        <a href="#how-it-works">How it works</a>
+        <a href="#safety">Safety</a>
+        <a href="/docs/">Docs</a>
+        <a href={REPO_URL}>GitHub</a>
+      </nav>
+      <a class="button nav-install" href="#install"><span aria-hidden="true">$&nbsp;</span>install</a>
+    </div>
   </header>
-  <main>
-    <section class="section">
-      <p class="ph">[Placeholder: hero, with the headline, lede and install command]</p>
+
+  <main class="page">
+    <section class="hero split" aria-labelledby="hero-heading">
+      <div class="hero-text">
+        <p class="status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>In development, no releases yet</span>
+        </p>
+        <h1 id="hero-heading" class="ph hero-heading">[Placeholder heading: what delocal is, in about four short lines]</h1>
+        <p class="ph hero-lede">[Placeholder: the lede, two or three lines on what delocal does and for whom]</p>
+        <div class="hero-install"><InstallCommand copy /></div>
+        <p class="ph ph-line hero-note">[Placeholder: "Needs Tailscale. Linux and macOS."]</p>
+      </div>
+      <div class="hero-terminal">
+        <Terminal title="~/Sync" label="delocal up in ~/Sync, syncing with two other machines" lines={heroTerminal} />
+      </div>
+    </section>
+
+    <section id="how-it-works" class="how split" aria-labelledby="how-heading">
+      <div class="how-text">
+        <h2 id="how-heading" class="ph how-heading">[Placeholder heading: how delocal works, and where the name comes from]</h2>
+        <ul class="points">
+          <li><p class="ph">[Placeholder: property 1, a title and a line or two]</p></li>
+          <li><p class="ph">[Placeholder: property 2, a title and a line or two]</p></li>
+          <li><p class="ph">[Placeholder: property 3, a title and a line or two]</p></li>
+        </ul>
+      </div>
+      <div class="how-art">
+        <OrbitArt id="how" />
+      </div>
+    </section>
+
+    <section id="safety" class="safety split" aria-labelledby="safety-heading">
+      <div class="safety-text">
+        <h2 id="safety-heading" class="ph safety-heading">[Placeholder heading: the safety promise]</h2>
+        <p class="ph safety-lede">[Placeholder: what happens when one machine goes wrong]</p>
+        <ul class="terms">
+          <li class="ph">[Placeholder: safety term 1 and a line on what it does]</li>
+          <li class="ph">[Placeholder: safety term 2 and a line on what it does]</li>
+          <li class="ph">[Placeholder: safety term 3 and a line on what it does]</li>
+        </ul>
+      </div>
+      <div class="safety-terminal">
+        <Terminal title="~/Sync" label="delocal status, with a mass delete from one machine held" lines={safetyTerminal} />
+      </div>
+    </section>
+
+    <section id="install" class="start" aria-labelledby="start-heading">
+      <h2 id="start-heading" class="ph ph-heading-line start-heading">[Placeholder heading: getting started]</h2>
+      <ol class="steps">
+        <li class="step">
+          <p class="step-label">1 Install</p>
+          <InstallCommand />
+        </li>
+        <li class="step">
+          <p class="step-label">2</p>
+          <p class="ph step-ph">[Placeholder: step 2, its label and command]</p>
+        </li>
+      </ol>
+      <p class="ph ph-line start-note">[Placeholder: one line on setting up the next machine, with a link to the docs]</p>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-heading">
+      <div class="panel">
+        <div class="panel-text">
+          <h2 id="closing-heading" class="ph ph-heading-line closing-heading">[Placeholder heading: following the build]</h2>
+          <p class="ph closing-line">[Placeholder: one line on building in the open]</p>
+          <a class="button" href={REPO_URL}>Watch on GitHub</a>
+        </div>
+        <div class="ph panel-art">[Placeholder art: three machines sharing one glowing cloud, in this palette]</div>
+      </div>
     </section>
   </main>
+
+  <footer class="footer">
+    <div class="footer-row">
+      <p class="footer-line">
+        <span class="footer-mark"><Mark width={32} /></span>
+        <span>delocal, named after a particle spread across many positions at once.</span>
+      </p>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/docs/">Docs</a>
+        <a href={REPO_URL}>GitHub</a>
+      </nav>
+    </div>
+  </footer>
 </Base>
 
 <style>
+  /* Heights of the placeholder boxes follow the copy they stand in for, so
+     the layout matches the mockup until the copy lands. */
+  .ph-line {
+    padding-block: 1px;
+    border-radius: 6px;
+    line-height: 22px;
+  }
+  .ph-heading-line {
+    padding-block: 11px;
+  }
+
+  /* ---- Frame ---- */
+  .nav-inner,
+  .page,
+  .footer {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding-inline: var(--gutter);
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .split > * {
+    min-width: 0;
+  }
+
+  .hero,
+  .how,
+  .safety {
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* ---- Nav ---- */
   .nav {
+    border-bottom: 1px solid var(--rule);
+  }
+  .nav-inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 36px;
     height: 100px;
-    padding: 0 var(--gutter);
-    border-bottom: 1px solid var(--rule);
   }
   .brand {
     display: flex;
     align-items: center;
     gap: 16px;
+    margin-right: auto;
     font-size: 24px;
     line-height: 1;
     text-decoration: none;
   }
-  nav {
+  .nav-links {
     display: flex;
     gap: 36px;
     font-size: 15px;
   }
-  nav a {
+  .nav-links a,
+  .footer-links a {
     color: var(--text-2);
     text-decoration: none;
   }
-  nav a:hover {
+  .nav-links a:hover,
+  .footer-links a:hover {
     color: var(--ink);
   }
-  .section {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: var(--rhythm) var(--gutter);
+
+  .button {
+    display: inline-flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 20px;
+    border-radius: var(--radius-button);
+    background: var(--amber);
+    color: var(--bg);
+    font-family: var(--font-code);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .nav-install {
+    height: 44px;
+    padding: 0 18px;
+  }
+
+  /* ---- Hero ---- */
+  .hero {
+    padding: 104px 0 var(--rhythm);
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 8px 16px 8px 15px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .status-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+  .hero-heading {
+    min-height: calc(4 * 1.08 * 60px);
+    margin-top: 24px;
+  }
+  .hero-lede {
+    max-width: 540px;
+    min-height: calc(3 * 1.5 * 21px);
+    margin-top: 30px;
+  }
+  .hero-install {
+    margin-top: 28px;
+  }
+  .hero-note {
+    margin-top: 24px;
+  }
+
+  /* ---- How it works ---- */
+  .how {
+    padding: var(--rhythm) 0;
+  }
+  .how-art {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 36px 24px;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+  .how-heading {
+    min-height: calc(4 * 1.15 * 40px);
+  }
+  .points {
+    display: grid;
+    gap: 28px;
+    margin: 36px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .points li {
+    display: grid;
+    grid-template-columns: 10px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  /* The bullet: a neutral dot, never a machine colour. */
+  .points li::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    margin-top: 20px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+  .points .ph {
+    min-height: 76px;
+  }
+
+  /* ---- Safety ---- */
+  .safety {
+    padding: var(--rhythm) 0;
+  }
+  .safety-heading {
+    min-height: calc(2 * 1.15 * 40px);
+  }
+  .safety-lede {
+    min-height: calc(2 * 30px);
+    margin-top: 28px;
+  }
+  .terms {
+    display: grid;
+    gap: 10px;
+    margin: 28px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .terms .ph {
+    padding-block: 8px;
+  }
+
+  /* ---- Get started ---- */
+  .start {
+    padding-top: var(--rhythm);
+  }
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 40px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .step {
+    display: grid;
+    align-content: start;
+    gap: 14px;
+    min-width: 0;
+    padding: 26px 28px 28px;
+    border-radius: var(--radius-card);
+    background: var(--surface);
+  }
+  .step-label {
+    margin: 0;
+    color: var(--muted);
+    font-family: var(--font-code);
+    font-size: 15px;
+    line-height: 24px;
+  }
+  .step-ph {
+    min-height: 52px;
+  }
+  .start-note {
+    margin-top: 36px;
+  }
+
+  /* ---- Closing band ---- */
+  .closing {
+    padding: 108px 0 var(--rhythm);
+  }
+  .panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+    padding: clamp(28px, 5vw, 72px);
+    border-radius: var(--radius-panel);
+    background: var(--raised);
+  }
+  .panel > * {
+    min-width: 0;
+  }
+  .closing-line {
+    min-height: calc(2 * 28px);
+    margin-top: 24px;
+  }
+  .panel-text .button {
+    margin-top: 28px;
+  }
+  .panel-art {
+    display: grid;
+    place-items: center;
+    min-height: 270px;
+    padding: 24px 48px;
+    text-align: center;
+  }
+
+  /* ---- Footer ---- */
+  .footer-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 36px;
+    padding: 32px 0 40px;
+    border-top: 1px solid var(--rule);
+  }
+  .footer-line {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .footer-mark {
+    flex: none;
+  }
+  .footer-links {
+    display: flex;
+    gap: 28px;
+    font-size: 15px;
+  }
+
+  /* ---- Narrow screens: one column ---- */
+  @media (max-width: 899.98px) {
+    .nav-inner {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px 24px;
+      height: auto;
+      padding-block: 20px;
+    }
+    .nav-links {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      flex-wrap: wrap;
+      gap: 8px 24px;
+    }
+
+    .split,
+    .steps,
+    .panel {
+      grid-template-columns: 1fr;
+    }
+    .split {
+      gap: 48px;
+    }
+    .hero {
+      padding-top: var(--rhythm);
+    }
+    .how-art {
+      grid-column: auto;
+      grid-row: auto;
+      padding: 24px 16px;
+    }
+    .closing {
+      padding-top: var(--rhythm);
+    }
+    .panel-art {
+      min-height: 200px;
+      padding-inline: 24px;
+    }
   }
 </style>
