@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    # Naming bash explicitly runs steps with -eo pipefail. The unnamed
+    # default is only bash -e, which hides a failure before a pipe.
+    shell: bash
+
 jobs:
   # The main branch ruleset requires a status check named exactly "check".
   check:
@@ -55,4 +61,113 @@ jobs:
       - name: Check /install
         run: sh scripts/check-install.sh http://127.0.0.1:8787 --local --run
 
-      # TODO(PR 2): deploy to Cloudflare Workers.
+      - name: Check the site
+        run: sh scripts/check-site.sh http://127.0.0.1:8787
+
+  # Production: every push to main, once check passes. The build sets no
+  # SITE_MODE or SITE_ENV, so PRODUCTION_MODE in site.config.mjs decides what
+  # ships, and launching stays a one-line change.
+  deploy:
+    name: deploy
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://delocal.sh
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        run: npx astro build
+
+      - name: Deploy
+        run: npx wrangler deploy --message "$GITHUB_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # SITE_URL in site.config.mjs.
+      - name: Smoke test https://delocal.sh
+        run: sh scripts/smoke-test.sh https://delocal.sh
+
+  # Previews: pull requests from branches in this repo (forks get no secrets).
+  # Uploads a version of the full site, built with SITE_ENV=preview so it is
+  # noindex, under the alias pr-<number>. Nothing changes in production.
+  preview:
+    name: preview
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: preview
+      url: ${{ steps.upload.outputs.url }}
+    concurrency:
+      group: preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build full preview
+        run: npx astro build
+        env:
+          SITE_MODE: full
+          SITE_ENV: preview
+
+      - name: Upload preview version
+        id: upload
+        run: |
+          rc=0
+          npx wrangler versions upload --preview-alias "pr-$PR_NUMBER" --message "PR #$PR_NUMBER at $GITHUB_SHA" \
+            2>&1 | tee "$RUNNER_TEMP/upload.log" || rc=$?
+          if [ "$rc" -ne 0 ]; then
+            # Versions can only be uploaded once the first production deploy has created the Worker.
+            if grep -q "does not yet exist" "$RUNNER_TEMP/upload.log"; then
+              echo "::notice::No preview yet: the Worker is created by the first production deploy."
+              exit 0
+            fi
+            exit "$rc"
+          fi
+          url=$(jq -r 'select(.type == "version-upload") | .preview_alias_url // empty' "$WRANGLER_OUTPUT_FILE_PATH")
+          if [ -z "$url" ]; then
+            echo "::error::wrangler reported no preview alias URL. Are preview URLs enabled for the Worker?"
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          WRANGLER_OUTPUT_FILE_PATH: ${{ runner.temp }}/wrangler-output.json
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke test the preview
+        if: steps.upload.outputs.url != ''
+        run: sh scripts/smoke-test.sh "$PREVIEW_URL" --preview
+        env:
+          PREVIEW_URL: ${{ steps.upload.outputs.url }}

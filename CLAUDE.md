@@ -37,6 +37,23 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
 - Before opening a PR, run both builds and `check-install.sh` against
   `wrangler dev` (see "Verifying" below).
 
+## Deploys
+
+- **Production** deploys only from CI. `deploy` runs on every push to
+  `main` after `check`. Never run `wrangler deploy` by hand; merging a PR is
+  how things ship.
+- **The deploy build sets no `SITE_MODE` or `SITE_ENV`**, so
+  `PRODUCTION_MODE` decides what ships. Keep it that way.
+- **Previews:** `preview` uploads the full site with `SITE_ENV=preview`
+  (noindex) as a Worker version with the alias `pr-<number>`. It only runs
+  for PRs from branches in this repo.
+- **Smoke tests:** `scripts/smoke-test.sh` runs `check-site.sh` and
+  `check-install.sh` against each deploy and preview, retrying for up to
+  10 minutes.
+- **Secrets:** `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, as repo
+  secrets.
+- **Rollback:** see README.md.
+
 ## Build modes
 
 `site.config.mjs` exports `PRODUCTION_MODE` (`"holding"` until launch),
@@ -80,6 +97,7 @@ SITE_MODE=full SITE_ENV=preview npx astro build --outDir dist-full
 SITE_MODE=full npx astro build --outDir dist-full   # must fail while placeholders remain
 npx wrangler dev --port 8787 --ip 127.0.0.1         # serves dist/, in another terminal
 sh scripts/check-install.sh http://127.0.0.1:8787 --local --run
+sh scripts/check-site.sh http://127.0.0.1:8787
 npx wrangler deploy --dry-run
 ```
 

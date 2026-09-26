@@ -52,12 +52,13 @@ half-written.
 | `SITE_MODE=full npm run build` | Full production build. Fails until the placeholders are gone. |
 | `npm run preview`            | Serves `dist/` with `wrangler dev` at http://localhost:8787, the way Workers will. Build first. |
 
-To check `/install` against the local server:
+To check the local server the way CI does:
 
 ```sh
 npm run build
 npm run preview        # in another terminal
 sh scripts/check-install.sh http://127.0.0.1:8787 --local --run
+sh scripts/check-site.sh http://127.0.0.1:8787
 ```
 
 ## How /install works
@@ -112,17 +113,97 @@ After every build, the build hook also checks:
 - No page or stylesheet loads a script, stylesheet, font or image from
   another host.
 
-## CI
+## CI and deploys
 
-[`.github/workflows/check.yml`](.github/workflows/check.yml) runs the `check`
-job on every pull request and on pushes to `main`. `main` requires that
-check to pass. The job:
+[`.github/workflows/check.yml`](.github/workflows/check.yml) has three jobs.
+
+**`check`** runs on every pull request and on every push to `main`. `main`
+requires it to pass. It:
 
 1. builds the holding site and the full preview;
 2. serves the holding build with `wrangler dev`;
-3. runs `check-install.sh --local --run` against it.
+3. runs `check-install.sh --local --run` and `check-site.sh` against it.
 
-Deploying comes in a later PR.
+**`deploy`** runs on pushes to `main`, once `check` has passed. That means
+every merged PR deploys:
+
+1. It builds with no `SITE_MODE` or `SITE_ENV`, so `PRODUCTION_MODE`
+   decides what ships.
+2. It runs `wrangler deploy`.
+3. It smoke-tests https://delocal.sh.
+
+Only one deploy runs at a time. A second push waits for the first to finish.
+
+**`preview`** runs on pull requests from branches in this repo, once
+`check` has passed. Forks get no secrets, so they get no preview. It:
+
+1. builds the full site with `SITE_ENV=preview`;
+2. uploads it as a new Worker version with
+   `wrangler versions upload --preview-alias pr-<number>`;
+3. smoke-tests it.
+
+The PR shows the preview URL as a "View deployment" link, and the job
+summary shows it too. A preview never changes production. Preview URLs are
+public but noindex.
+
+### Smoke tests
+
+[`scripts/smoke-test.sh`](scripts/smoke-test.sh) runs two checks against a
+deployed site:
+
+- [`scripts/check-site.sh`](scripts/check-site.sh):
+  - `/` returns 200 HTML;
+  - each security header appears exactly once;
+  - an unknown path returns the 404 page;
+  - `_headers` is not served;
+  - robots rules match the environment. A production build must be
+    indexable, and a preview (`--preview`) must be noindex with
+    `Disallow: /`.
+- `check-install.sh --run`, with the full https and redirect checks.
+
+It retries for up to 10 minutes (`SMOKE_TIMEOUT`), because the first deploy
+has to provision the custom domain and its certificate.
+
+### Secrets
+
+These are repository secrets:
+
+- `CLOUDFLARE_API_TOKEN`: a token made from Cloudflare's "Edit Cloudflare
+  Workers" template, covering the account and the `delocal.sh` zone.
+- `CLOUDFLARE_ACCOUNT_ID`.
+
+### The first deploy
+
+The first push to `main` with the `deploy` job creates:
+
+- the Worker `delocal-site`;
+- its workers.dev address;
+- the custom domain `delocal.sh`, with its DNS record and certificate.
+
+Two things must already be true:
+
+- **workers.dev subdomain:** the Cloudflare account must have one
+  registered. If it doesn't, wrangler stops with a link to register it in
+  the dashboard. Register it, then re-run the job.
+- **DNS:** the `delocal.sh` zone must be on the same account, with no DNS
+  record of its own for `delocal.sh`. The Worker's custom domain creates
+  that record.
+
+The `preview` job can't upload a version until the Worker exists, so a PR
+opened before the first deploy passes with a notice and no preview.
+
+### Rolling back
+
+```sh
+npx wrangler rollback              # back to the previous version
+npx wrangler deployments list      # to pick a specific one
+```
+
+These need `wrangler login` or the API token. Alternatively, use the Worker's
+Deployments tab in the Cloudflare dashboard.
+
+A rollback lasts until the next push to `main` deploys again. Fix `main`
+with a PR soon after rolling back.
 
 ## Launching
 
@@ -134,7 +215,7 @@ full site:
    build` must pass locally.
 2. **Open a PR** that changes `PRODUCTION_MODE` in
    [`site.config.mjs`](site.config.mjs) from `"holding"` to `"full"`.
-3. **Merge it** once `check` is green.
+3. **Merge it** once `check` is green. The `deploy` job ships it.
 
 ## Layout
 
@@ -144,6 +225,8 @@ site.config.mjs         PRODUCTION_MODE, REPO_URL, SITE_URL
 wrangler.jsonc          Workers static assets config (no Worker code)
 install/install.sh      the script served at /install
 scripts/check-install.sh
+scripts/check-site.sh   checks a served site: home page, headers, robots rules, 404
+scripts/smoke-test.sh   check-site and check-install against a deploy, with retries
 src/lib/mode.mjs        resolves SITE_MODE and SITE_ENV
 src/lib/build-hooks.mjs publishes /install, writes _headers and robots.txt, checks the output
 src/pages/              index (holding or landing, by mode) and 404
