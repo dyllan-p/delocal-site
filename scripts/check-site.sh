@@ -3,31 +3,46 @@
 # robots rules for the environment and the 404 page. check-install.sh covers
 # /install.
 #
-# Usage: sh scripts/check-site.sh <base-url> [--preview]
+# Usage: sh scripts/check-site.sh <base-url> [--preview] [--workers-dev <url>]
 #
-#   --preview  Expect a preview build (SITE_ENV=preview): noindex everywhere
-#              and robots.txt disallowing everything. Without it, expect a
-#              production build, which must be indexable.
+#   --preview            Expect a preview build (SITE_ENV=preview): noindex,
+#                        and robots.txt disallowing everything. Without it,
+#                        expect a production build, which must be indexable.
+#   --workers-dev <url>  Also check that <url>, the workers.dev copy of
+#                        production, is noindex.
+#
+# Strict-Transport-Security is only checked on https:// URLs, because
+# browsers ignore it over http.
+#
+# The noindex checks test the outcome, not the header count: Cloudflare may add
+# its own X-Robots-Tag to version and preview URLs, next to ours.
 #
 # Exits non-zero if any check fails, including when curl cannot connect.
 set -eu
 
 usage() {
-	echo "usage: sh scripts/check-site.sh <base-url> [--preview]" >&2
+	echo "usage: sh scripts/check-site.sh <base-url> [--preview] [--workers-dev <url>]" >&2
 	exit 2
 }
 
 base=
 preview=0
-for arg in "$@"; do
-	case $arg in
+workers_dev=
+while [ $# -gt 0 ]; do
+	case $1 in
 	--preview) preview=1 ;;
+	--workers-dev)
+		[ -n "${2:-}" ] || usage
+		workers_dev=${2%/}
+		shift
+		;;
 	-*) usage ;;
 	*)
 		[ -z "$base" ] || usage
-		base=$arg
+		base=$1
 		;;
 	esac
+	shift
 done
 [ -n "$base" ] || usage
 base=${base%/}
@@ -43,13 +58,13 @@ fail() {
 	failures=$((failures + 1))
 }
 
-# fetch <path>: GET without following redirects. Sets $status and leaves the
+# fetch <url>: GET without following redirects. Sets $status and leaves the
 # headers (CR stripped) in $tmp/headers and the body in $tmp/body.
 fetch() {
 	rc=0
-	status=$(curl -sS --max-time 30 -D "$tmp/raw" -o "$tmp/body" -w '%{http_code}' "$base$1") || rc=$?
+	status=$(curl -sS --max-time 30 -D "$tmp/raw" -o "$tmp/body" -w '%{http_code}' "$1") || rc=$?
 	if [ "$rc" -ne 0 ]; then
-		fail "curl exited $rc fetching $base$1"
+		fail "curl exited $rc fetching $1"
 		exit 1
 	fi
 	tr -d '\r' <"$tmp/raw" >"$tmp/headers"
@@ -70,6 +85,18 @@ expect_header() {
 	fi
 }
 
+# The values of every X-Robots-Tag header, joined by " | ".
+robots_tags() {
+	grep -i '^x-robots-tag:' "$tmp/headers" | sed 's/^[^:]*:[[:space:]]*//' |
+		awk 'NR > 1 { printf " | " } { printf "%s", $0 }'
+}
+# Whether any X-Robots-Tag header says noindex. "none" means noindex, nofollow.
+header_noindex() { grep -i '^x-robots-tag:' "$tmp/headers" | grep -Eiq '[^a-z](noindex|none)([^a-z]|$)'; }
+# Whether the body has a robots meta tag that says noindex.
+meta_noindex() {
+	grep -Eio "<meta[^>]*name=[\"']?robots[^>]*>" "$tmp/body" | grep -Eiq '[^a-z](noindex|none)([^a-z]|$)'
+}
+
 if [ "$preview" = 1 ]; then
 	echo "Checking $base (preview build)"
 else
@@ -77,7 +104,7 @@ else
 fi
 
 # Home page
-fetch /
+fetch "$base/"
 if [ "$status" = 200 ]; then pass "/ is 200"; else fail "/ is $status, expected 200"; fi
 case $(header content-type) in
 text/html*) pass "/ is text/html" ;;
@@ -87,16 +114,33 @@ expect_header X-Content-Type-Options "nosniff"
 expect_header Referrer-Policy "strict-origin-when-cross-origin"
 expect_header X-Frame-Options "DENY"
 expect_header Permissions-Policy "camera=(), microphone=(), geolocation=()"
+case $base in
+https://*) expect_header Strict-Transport-Security "max-age=31536000" ;;
+*) echo "skip  Strict-Transport-Security, which browsers ignore over http" ;;
+esac
+
+# Indexing, judged on / (the 404 page is always noindex).
 if [ "$preview" = 1 ]; then
-	expect_header X-Robots-Tag "noindex, nofollow"
-elif [ "$(count_header X-Robots-Tag)" = 0 ]; then
-	pass "no X-Robots-Tag"
+	if header_noindex; then
+		pass "/ is noindex (X-Robots-Tag: $(robots_tags))"
+	else
+		fail "/ has no X-Robots-Tag with noindex, but a preview must not be indexed"
+	fi
 else
-	fail "X-Robots-Tag: $(header X-Robots-Tag), but a production build must be indexable"
+	if header_noindex; then
+		fail "X-Robots-Tag: $(robots_tags), but a production build must be indexable"
+	else
+		pass "/ has no X-Robots-Tag with noindex"
+	fi
+	if meta_noindex; then
+		fail "/ has a robots noindex meta tag, but a production build must be indexable"
+	else
+		pass "/ has no robots noindex meta tag"
+	fi
 fi
 
 # robots.txt
-fetch /robots.txt
+fetch "$base/robots.txt"
 if [ "$status" = 200 ]; then pass "/robots.txt is 200"; else fail "/robots.txt is $status, expected 200"; fi
 if [ "$preview" = 1 ]; then
 	if grep -qx 'Disallow: /' "$tmp/body"; then
@@ -111,17 +155,34 @@ else
 fi
 
 # 404 page
-fetch /this-page-does-not-exist
+fetch "$base/this-page-does-not-exist"
 if [ "$status" = 404 ]; then pass "unknown path is 404"; else fail "unknown path is $status, expected 404"; fi
 if grep -q '<title>Not found' "$tmp/body"; then
 	pass "unknown path serves 404.html"
 else
 	fail "unknown path does not serve 404.html"
 fi
+if meta_noindex; then
+	pass "404.html has a robots noindex meta tag"
+else
+	fail "404.html has no robots noindex meta tag"
+fi
 
 # _headers configures Workers and must not be served itself.
-fetch /_headers
+fetch "$base/_headers"
 if [ "$status" = 404 ]; then pass "/_headers is not served"; else fail "/_headers is $status, expected 404"; fi
+
+# The workers.dev copy of production must never be indexed.
+if [ -n "$workers_dev" ]; then
+	echo "Checking $workers_dev (workers.dev copy)"
+	fetch "$workers_dev/"
+	if [ "$status" = 200 ]; then pass "$workers_dev/ is 200"; else fail "$workers_dev/ is $status, expected 200"; fi
+	if header_noindex; then
+		pass "$workers_dev/ is noindex (X-Robots-Tag: $(robots_tags))"
+	else
+		fail "$workers_dev/ has no X-Robots-Tag with noindex, but it must not be indexed"
+	fi
+fi
 
 if [ "$failures" -ne 0 ]; then
 	echo "$failures check(s) failed for $base"
