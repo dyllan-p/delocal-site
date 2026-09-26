@@ -1,0 +1,16 @@
+// Cloudflare Workers with static assets. There is no Worker code: everything
+// is served from ./dist, with headers from dist/_headers (written by
+// src/lib/build-hooks.mjs).
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "delocal-site",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "workers_dev": true,
+  "preview_urls": true,
+  "routes": [{ "pattern": "delocal.sh", "custom_domain": true }]
+}

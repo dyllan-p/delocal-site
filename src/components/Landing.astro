@@ -1,0 +1,62 @@
+---
+// The landing page for full mode. Only a skeleton for now: DESIGN.md
+// describes the sections from design/mockup.pdf, and each gets real copy
+// once the code does what it describes.
+import { REPO_URL } from "../../site.config.mjs";
+import Base from "../layouts/Base.astro";
+import Mark from "./Mark.astro";
+---
+
+<Base title="delocal" description="[Placeholder: meta description]">
+  <header class="nav">
+    <a class="brand" href="/">
+      <span class="brand-mark"><Mark /></span>
+      <span class="wordmark">delocal</span>
+    </a>
+    <nav aria-label="Main">
+      <a href="/docs/">Docs</a>
+      <a href={REPO_URL}>GitHub</a>
+    </nav>
+  </header>
+  <main>
+    <section class="section">
+      <p class="ph">[Placeholder: hero, with the headline, lede and install command]</p>
+    </section>
+  </main>
+</Base>
+
+<style>
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100px;
+    padding: 0 var(--gutter);
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 24px;
+    line-height: 1;
+    text-decoration: none;
+  }
+  nav {
+    display: flex;
+    gap: 36px;
+    font-size: 15px;
+  }
+  nav a {
+    color: var(--text-2);
+    text-decoration: none;
+  }
+  nav a:hover {
+    color: var(--ink);
+  }
+  .section {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: var(--rhythm) var(--gutter);
+  }
+</style>

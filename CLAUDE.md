@@ -1,0 +1,88 @@
+# CLAUDE.md
+
+The website for delocal (https://github.com/dyllan-p/delocal), served at
+delocal.sh. delocal is a CLI-only file sync tool for Linux and macOS that
+requires Tailscale. It is still in development, with no releases. README.md
+covers commands and structure.
+
+**Read DESIGN.md before touching any page.** `design/mockup.pdf` is the
+visual reference. Where the two disagree, DESIGN.md and the tokens win.
+
+## Rules
+
+- **Claim nothing the code doesn't yet do.**
+  - Until launch, the public site is the holding page only.
+  - All other pages carry placeholder copy, as
+    `<p class="ph">[Placeholder: what goes here]</p>`.
+  - Terminal examples are tagged "illustrative".
+  - No stats, logos, testimonials or FAQ.
+- **Everything self-hosted.** No third-party fonts, scripts or images at
+  runtime. The build fails if a page or stylesheet loads one from another
+  host.
+- **Dark only.**
+  - No light theme, no toggle, no `prefers-color-scheme` queries, and no
+    `data-theme` script. `:root` has `color-scheme: dark`.
+  - Starlight's ThemeSelect and ThemeProvider are overridden with empty
+    components. Keep it that way.
+- **Exact versions.** They are pinned with npm `save-exact` (see `.npmrc`),
+  and the lockfile is committed. Upgrade deliberately, in its own PR.
+
+## PR workflow
+
+- Branch from `main`, open one PR with `gh pr create`, then stop. Dyllan
+  merges.
+- `main` has a ruleset: changes go in through PRs only, and the status check
+  `check` is required. The job in `.github/workflows/check.yml` must keep the
+  id and name `check`.
+- Before opening a PR, run both builds and `check-install.sh` against
+  `wrangler dev` (see "Verifying" below).
+
+## Build modes
+
+`site.config.mjs` exports `PRODUCTION_MODE` (`"holding"` until launch),
+`REPO_URL` and `SITE_URL`. `src/lib/mode.mjs` resolves the mode:
+
+- `SITE_MODE` is `holding` or `full`. It defaults to `PRODUCTION_MODE`, and
+  any other value throws.
+- `SITE_ENV` is `production` or `preview`. It defaults to `production`, and
+  any other value throws.
+
+With no env vars set, a build produces the holding page. In full mode:
+
+- The Starlight integration is added, and `src/content.config.ts` defines
+  the docs collection. In holding mode it exports `{}`.
+- `src/pages/index.astro` renders `Holding` or `Landing`, by mode.
+- `src/pages/404.astro` serves both modes, because Starlight's 404 is
+  disabled.
+
+`src/lib/build-hooks.mjs` runs on `astro:build:done`:
+
+- **/install.** It checks `install/install.sh`, then copies it to
+  `dist/install`. Never put it in `public/`.
+- **Other files.** It writes `dist/_headers` and `dist/robots.txt`.
+- **Output checks.** It fails the build when:
+  - a holding build has pages besides `index.html` and `404.html`, or has a
+    pagefind directory;
+  - a full build lacks `docs/index.html`;
+  - a production build has placeholders;
+  - anything loads from another host.
+
+Workers joins the values of every `_headers` rule that matches a path. So
+never set one header in two rules whose paths overlap. `/*` overlaps
+everything.
+
+## Verifying
+
+```sh
+npm ci
+SITE_MODE=holding npx astro build --outDir dist
+SITE_MODE=full SITE_ENV=preview npx astro build --outDir dist-full
+SITE_MODE=full npx astro build --outDir dist-full   # must fail while placeholders remain
+npx wrangler dev --port 8787 --ip 127.0.0.1         # serves dist/, in another terminal
+sh scripts/check-install.sh http://127.0.0.1:8787 --local --run
+npx wrangler deploy --dry-run
+```
+
+Astro builds into the project directory tree. Don't point `--outDir` at
+another filesystem, such as `/tmp` on some machines: Astro moves files into
+place with `rename`, which fails across filesystems.

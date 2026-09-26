@@ -1,0 +1,9 @@
+/* Every font the site uses. Vite copies the files into /_astro/, so they are
+   served from this site, never from another host. */
+
+/* Martian Mono: wordmark and headings. "standard" has both wght and wdth axes. */
+@import "@fontsource-variable/martian-mono/standard.css";
+/* Atkinson Hyperlegible Next: body text. */
+@import "@fontsource-variable/atkinson-hyperlegible-next";
+/* JetBrains Mono: terminals, code and the nav's "$ install" button. */
+@import "@fontsource-variable/jetbrains-mono";

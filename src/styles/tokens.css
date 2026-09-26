@@ -1,0 +1,39 @@
+/* Design tokens. DESIGN.md explains them; keep the two in step.
+   The site is dark only: there is no light palette. */
+:root {
+  color-scheme: dark;
+
+  --bg: #14152a;
+  --surface: #181a33;
+  --raised: #1d1f3d;
+  --terminal: #0e0f20;
+  --rule: #2a2c4a;
+  --rule-strong: #3a3c62;
+  --ink: #eceaf4;
+  --text-2: #c3c4dc;
+  --muted: #a4a6c4;
+  --faint: #8d8fb0;
+  --amber: #f5b947;
+  --cyan: #5fd4e6;
+  --violet: #b39bff;
+  --rose: #ff8fa3;
+  --green: #7ee2a8;
+
+  /* Machines always keep their colour. */
+  --laptop: var(--cyan);
+  --desk: var(--amber);
+  --nas: var(--violet);
+
+  --font-display: "Martian Mono Variable", ui-monospace, monospace;
+  --font-body: "Atkinson Hyperlegible Next Variable", system-ui, sans-serif;
+  --font-code: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --radius-button: 10px;
+  --radius-install: 12px;
+  --radius-card: 16px;
+  --radius-panel: 28px;
+
+  /* 96px sides and 88px vertical rhythm on the 1440 canvas, smaller on phones. */
+  --gutter: clamp(20px, 6.667vw, 96px);
+  --rhythm: clamp(56px, 6.111vw, 88px);
+}

@@ -1,0 +1,12 @@
+/* Placeholder copy: <p class="ph">[Placeholder: what goes here]</p>.
+   A production build fails if any page still has one. */
+.ph {
+  margin: 0;
+  padding: 16px 20px;
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-card);
+  color: var(--faint);
+  font-family: var(--font-code);
+  font-size: 14px;
+  line-height: 1.6;
+}

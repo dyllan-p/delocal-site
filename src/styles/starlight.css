@@ -1,0 +1,57 @@
+/* Starlight, locked to the site's dark palette. This file is not in a cascade
+   layer, so it wins over Starlight's own (layered) styles. Starlight's light
+   palette only applies under [data-theme="light"], which is never set:
+   Page.astro renders data-theme="dark" and our empty ThemeProvider override
+   removes the script that would change it. */
+:root {
+  color-scheme: dark;
+
+  --sl-font: var(--font-body);
+  --sl-font-mono: var(--font-code);
+
+  --sl-color-white: var(--ink);
+  --sl-color-gray-1: var(--ink);
+  --sl-color-gray-2: var(--text-2);
+  --sl-color-gray-3: var(--muted);
+  --sl-color-gray-4: var(--faint);
+  --sl-color-gray-5: var(--rule-strong);
+  --sl-color-gray-6: var(--surface);
+  --sl-color-black: var(--bg);
+
+  /* The current sidebar item is an amber button with dark text, like ours. */
+  --sl-color-accent-low: var(--raised);
+  --sl-color-accent: var(--amber);
+  --sl-color-accent-high: var(--amber);
+  --sl-color-text-accent: var(--amber);
+  --sl-color-text-invert: var(--bg);
+
+  --sl-color-bg: var(--bg);
+  --sl-color-bg-nav: var(--bg);
+  --sl-color-bg-sidebar: var(--bg);
+  --sl-color-bg-inline-code: var(--raised);
+  --sl-color-hairline: var(--rule);
+  --sl-color-hairline-light: var(--rule-strong);
+  --sl-color-hairline-shade: var(--terminal);
+}
+
+.site-title {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-stretch: 112.5%;
+  letter-spacing: -0.02em;
+}
+
+h1#_top,
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 87.5%;
+  letter-spacing: -0.03em;
+}
+
+/* Starlight sizes the logo to the header height; the mark is 44x16. */
+.site-title img {
+  width: 44px;
+  height: 16px;
+}

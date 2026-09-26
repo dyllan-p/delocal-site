@@ -1,0 +1,58 @@
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # The main branch ruleset requires a status check named exactly "check".
+  check:
+    name: check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      ASTRO_TELEMETRY_DISABLED: "1"
+      WRANGLER_SEND_METRICS: "false"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Holding goes in dist/, which is what wrangler.jsonc serves.
+      - name: Build holding
+        run: npx astro build --outDir dist
+        env:
+          SITE_MODE: holding
+
+      - name: Build full preview
+        run: npx astro build --outDir dist-full
+        env:
+          SITE_MODE: full
+          SITE_ENV: preview
+
+      - name: Serve the holding build
+        run: |
+          npx wrangler dev --port 8787 --ip 127.0.0.1 > "$RUNNER_TEMP/wrangler.log" 2>&1 &
+          deadline=$((SECONDS + 60))
+          until curl -fsS -o /dev/null http://127.0.0.1:8787/; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "wrangler dev did not answer within 60 s"
+              cat "$RUNNER_TEMP/wrangler.log"
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Check /install
+        run: sh scripts/check-install.sh http://127.0.0.1:8787 --local --run
+
+      # TODO(PR 2): deploy to Cloudflare Workers.
