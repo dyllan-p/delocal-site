@@ -125,8 +125,13 @@ The build hook writes every header into `dist/_headers`:
     neither delocal.sh nor the version and preview hosts, which are
     `<version or alias>-delocal-site.<account subdomain>.workers.dev`.
   - Preview builds set the header in `/*` instead.
-  - Cloudflare adds its own `X-Robots-Tag: noindex` to version and preview
-    URLs, so those can send two headers. Both say noindex.
+  - On version and preview URLs, Cloudflare sets its own
+    `X-Robots-Tag: noindex` in place of ours. So previews show `noindex`,
+    not `noindex, nofollow`. We keep our own header in case Cloudflare
+    stops.
+  - workers.dev serves plain http without redirecting. "Always Use HTTPS"
+    only covers the delocal.sh zone. Browsers use https anyway, because
+    `.dev` is on the HSTS preload list.
 - **Canonical links.** Every page has a
   `<link rel="canonical">` to `https://delocal.sh` plus its path, in both
   modes. Starlight adds its own on docs pages.
@@ -206,9 +211,9 @@ deployed site:
   - with `--workers-dev <url>`, that URL has at least one `X-Robots-Tag`
     saying noindex. The deploy job passes the workers.dev URL.
 
-  The noindex checks test the outcome, not the header count. Cloudflare may
-  add its own `X-Robots-Tag` to version and preview URLs. The build check on
-  `_headers` covers what we control.
+  The noindex checks test the outcome, not the header count or value.
+  Cloudflare replaces `X-Robots-Tag` on version and preview URLs. The build
+  check on `_headers` covers what we control.
 - `check-install.sh --run`, with the full https and redirect checks.
 
 It retries for up to 10 minutes (`SMOKE_TIMEOUT`), because the first deploy

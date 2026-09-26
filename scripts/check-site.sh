@@ -14,8 +14,9 @@
 # Strict-Transport-Security is only checked on https:// URLs, because
 # browsers ignore it over http.
 #
-# The noindex checks test the outcome, not the header count: Cloudflare may add
-# its own X-Robots-Tag to version and preview URLs, next to ours.
+# The noindex checks test the outcome, not the header count or value:
+# Cloudflare sets its own X-Robots-Tag on version and preview URLs, in place of
+# ours.
 #
 # Exits non-zero if any check fails, including when curl cannot connect.
 set -eu
