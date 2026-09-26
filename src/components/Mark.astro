@@ -1,5 +1,7 @@
 ---
-// The logo mark: three dots on a 44x16 grid, one per machine colour.
+// The logo mark: three dots on a 44x16 grid. The outer dots are places and the
+// amber centre is the file spread across them, so it uses the plain colour
+// tokens, not the machine ones.
 // Scoped styles from a parent don't reach this <svg>, so put spacing on a
 // wrapper element in the parent.
 interface Props {
@@ -9,22 +11,22 @@ const { width = 44 } = Astro.props;
 ---
 
 <svg class="mark" viewBox="0 0 44 16" width={width} height={(width * 16) / 44} aria-hidden="true" focusable="false">
-  <circle class="laptop" cx="4.5" cy="8" r="4.5"></circle>
-  <circle class="desk" cx="22" cy="8" r="5.5"></circle>
-  <circle class="nas" cx="39.5" cy="8" r="4.5"></circle>
+  <circle class="cyan" cx="4.5" cy="8" r="4.5"></circle>
+  <circle class="amber" cx="22" cy="8" r="5.5"></circle>
+  <circle class="violet" cx="39.5" cy="8" r="4.5"></circle>
 </svg>
 
 <style>
   .mark {
     display: block;
   }
-  .laptop {
-    fill: var(--laptop);
+  .cyan {
+    fill: var(--cyan);
   }
-  .desk {
-    fill: var(--desk);
+  .amber {
+    fill: var(--amber);
   }
-  .nas {
-    fill: var(--nas);
+  .violet {
+    fill: var(--violet);
   }
 </style>

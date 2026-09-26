@@ -3,27 +3,38 @@
 // orbits, a glow in each machine's colour and line-drawn machine icons around a
 // centre dot. Pure SVG, so it renders without JavaScript. Coordinates are
 // relative to the centre dot at (0, 0) and match the 1440 canvas at 1:1.
+//
+// Used by the holding page and the landing page. `id` names this copy's
+// gradients, so two copies on one page need different ids. The build fails if
+// they share one (see build-hooks.mjs).
+interface Props {
+  id: string;
+}
+const { id } = Astro.props;
+if (!/^[a-z][a-z0-9-]*$/.test(id ?? "")) {
+  throw new Error(`OrbitArt needs an id of lower-case letters, digits and hyphens, got ${JSON.stringify(id)}`);
+}
 ---
 
-<svg class="holding-art" viewBox="-290 -220 580 440" aria-hidden="true" focusable="false">
+<svg class="orbit-art" data-orbit-art={id} viewBox="-290 -220 580 440" aria-hidden="true" focusable="false">
   <defs>
-    <radialGradient id="holding-glow-laptop">
+    <radialGradient id={`${id}-glow-laptop`}>
       <stop class="laptop" offset="0" stop-opacity="0.55"></stop>
       <stop class="laptop" offset="1" stop-opacity="0"></stop>
     </radialGradient>
-    <radialGradient id="holding-glow-desk">
+    <radialGradient id={`${id}-glow-desk`}>
       <stop class="desk" offset="0" stop-opacity="0.55"></stop>
       <stop class="desk" offset="1" stop-opacity="0"></stop>
     </radialGradient>
-    <radialGradient id="holding-glow-nas">
+    <radialGradient id={`${id}-glow-nas`}>
       <stop class="nas" offset="0" stop-opacity="0.55"></stop>
       <stop class="nas" offset="1" stop-opacity="0"></stop>
     </radialGradient>
   </defs>
 
-  <circle cx="-175" cy="-65" r="100" fill="url(#holding-glow-laptop)"></circle>
-  <circle cx="175" cy="-65" r="100" fill="url(#holding-glow-desk)"></circle>
-  <circle cx="0" cy="118" r="100" fill="url(#holding-glow-nas)"></circle>
+  <circle cx="-175" cy="-65" r="100" fill={`url(#${id}-glow-laptop)`}></circle>
+  <circle cx="175" cy="-65" r="100" fill={`url(#${id}-glow-desk)`}></circle>
+  <circle cx="0" cy="118" r="100" fill={`url(#${id}-glow-nas)`}></circle>
 
   <g class="orbits">
     <ellipse rx="226" ry="123"></ellipse>
@@ -64,7 +75,7 @@
 </svg>
 
 <style>
-  .holding-art {
+  .orbit-art {
     display: block;
     width: 100%;
     max-width: 580px;

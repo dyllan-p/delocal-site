@@ -1,0 +1,131 @@
+---
+// The install command in a code box: the hero's install box (with a Copy
+// button) or the plain box in "Get started". The command is always
+// SITE_URL/install, the script in install/install.sh.
+import { SITE_URL } from "../../site.config.mjs";
+
+interface Props {
+  copy?: boolean;
+}
+const { copy = false } = Astro.props;
+const command = `curl -fsSL ${new URL("/install", SITE_URL).href} | sh`;
+---
+
+<div class:list={["install-command", { plain: !copy }]} data-install-command>
+  <span class="prompt" aria-hidden="true">$</span>
+  <code class="command" tabindex="0" data-command>{command}</code>
+  {
+    copy && (
+      <>
+        <button class="copy" type="button" hidden data-copy>Copy</button>
+        <span class="visually-hidden" role="status" aria-live="polite" data-copy-status />
+      </>
+    )
+  }
+</div>
+
+<script>
+  // The Copy button, and the only script on the page. The button is rendered
+  // hidden, so without JavaScript it never shows and the command stays
+  // selectable by hand.
+  for (const box of document.querySelectorAll<HTMLElement>("[data-install-command]")) {
+    const button = box.querySelector<HTMLButtonElement>("[data-copy]");
+    const command = box.querySelector<HTMLElement>("[data-command]");
+    const status = box.querySelector<HTMLElement>("[data-copy-status]");
+    if (!button || !command || !status) continue;
+
+    let reset: ReturnType<typeof setTimeout> | undefined;
+    const show = (message: string, label: string) => {
+      clearTimeout(reset);
+      status.textContent = message;
+      button.textContent = label;
+      reset = setTimeout(() => {
+        status.textContent = "";
+        button.textContent = "Copy";
+      }, 2000);
+    };
+
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(command.textContent ?? "");
+        show("Copied", "Copied");
+      } catch {
+        // No clipboard access: select the command so it can be copied by hand.
+        const range = document.createRange();
+        range.selectNodeContents(command);
+        const selection = getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        show("Command selected", "Copy");
+      }
+    });
+    button.hidden = false;
+  }
+</script>
+
+<style>
+  .install-command {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    height: 60px;
+    padding: 0 8px 0 20px;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-install);
+    background: var(--terminal);
+    font-family: var(--font-code);
+    font-size: 16px;
+    line-height: 26px;
+  }
+  .plain {
+    height: 52px;
+    padding-right: 18px;
+    border-color: var(--terminal);
+    border-radius: var(--radius-button);
+  }
+
+  .prompt {
+    flex: none;
+    color: var(--amber);
+  }
+  .command {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    color: var(--ink);
+    white-space: pre;
+    user-select: all;
+  }
+  .command:focus-visible {
+    outline-offset: 2px;
+  }
+
+  /* No display rule here, so the hidden attribute still hides it. */
+  .copy {
+    flex: none;
+    /* Wide enough for "Copied", so the box doesn't shift when it changes. */
+    min-width: calc(6ch + 28px);
+    height: 42px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--raised);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .copy:hover {
+    background: var(--rule);
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

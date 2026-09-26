@@ -30,9 +30,26 @@ const docs = () =>
     expressiveCode: { themes: ["starlight-dark"] },
   });
 
+// The home page is Holding or Landing, by mode. Only one is routed, so the
+// other's styles stay out of the build: a page bundles the CSS of every
+// component it imports, whether it renders it or not.
+const home = () => ({
+  name: "delocal:home",
+  hooks: {
+    "astro:config:setup": ({ injectRoute }) => {
+      const page = siteMode === "full" ? "Landing" : "Holding";
+      injectRoute({ pattern: "/", entrypoint: `./src/components/${page}.astro` });
+    },
+  },
+});
+
 export default defineConfig({
   site: SITE_URL,
+  // Starlight turns on link prefetching by default, which adds a script to
+  // every page. The landing page's only script is its Copy button.
+  prefetch: false,
   integrations: [
+    home(),
     ...(siteMode === "full" ? [docs()] : []),
     // Last, so its checks see the finished output.
     buildHooks({ siteMode, siteEnv }),

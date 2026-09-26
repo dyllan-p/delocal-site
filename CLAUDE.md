@@ -14,7 +14,8 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
   - Until launch, the public site is the holding page only.
   - All other pages carry placeholder copy, as
     `<p class="ph">[Placeholder: what goes here]</p>`.
-  - Terminal examples are tagged "illustrative".
+  - Terminal examples are tagged "illustrative" and carry
+    `data-illustrative`.
   - No stats, logos, testimonials or FAQ.
 - **Everything self-hosted.** No third-party fonts, scripts or images at
   runtime. The build fails if a page or stylesheet loads one from another
@@ -69,13 +70,22 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
 - `SITE_ENV` is `production` or `preview`. It defaults to `production`, and
   any other value throws.
 
-With no env vars set, a build produces the holding page. In full mode:
+With no env vars set, a build produces the holding page.
+
+`/` is `src/components/Holding.astro` or `Landing.astro`, by mode.
+`astro.config.mjs` injects the route for only one of them, because a page
+bundles the CSS of every component it imports, rendered or not. So never
+import `Landing` from anything the holding page uses.
+
+In full mode:
 
 - The Starlight integration is added, and `src/content.config.ts` defines
   the docs collection. In holding mode it exports `{}`.
-- `src/pages/index.astro` renders `Holding` or `Landing`, by mode.
 - `src/pages/404.astro` serves both modes, because Starlight's 404 is
   disabled.
+- Link prefetching is off (`prefetch: false`). Starlight would otherwise
+  add its script to every page, and the landing page's only script is its
+  Copy button.
 
 `src/lib/build-hooks.mjs` runs on `astro:build:done`:
 
@@ -86,7 +96,9 @@ With no env vars set, a build produces the holding page. In full mode:
   - a holding build has pages besides `index.html` and `404.html`, or has a
     pagefind directory;
   - a full build lacks `docs/index.html`;
-  - a production build has placeholders;
+  - a production build has placeholders or `data-illustrative` elements
+    (the error names each one);
+  - two `OrbitArt` instances on one page share an id;
   - anything loads from another host;
   - a page other than `404.html` lacks exactly one canonical link to
     `SITE_URL` plus its path, or `404.html` isn't noindex;
@@ -102,7 +114,7 @@ everything.
 npm ci
 SITE_MODE=holding npx astro build --outDir dist
 SITE_MODE=full SITE_ENV=preview npx astro build --outDir dist-full
-SITE_MODE=full npx astro build --outDir dist-full   # must fail while placeholders remain
+SITE_MODE=full npx astro build --outDir dist-full   # must fail while placeholders or illustrative examples remain
 npx wrangler dev --port 8787 --ip 127.0.0.1         # serves dist/, in another terminal
 sh scripts/check-install.sh http://127.0.0.1:8787 --local --run
 sh scripts/check-site.sh http://127.0.0.1:8787

@@ -39,8 +39,9 @@ default. Any other value fails the build.
   on the workers.dev copy. See [Headers and indexing](#headers-and-indexing).
 
 A **production full build fails** while any page still has placeholder copy
-(`class="ph"` or the text `[Placeholder`). That stops the site launching
-half-written.
+(`class="ph"` or the text `[Placeholder`) or an illustrative example
+(`data-illustrative`, which the terminal examples carry). The error names
+each one. That stops the site launching half-written.
 
 ## Running locally
 
@@ -147,6 +148,7 @@ After every build, the build hook also checks:
 - A holding build has only `index.html` and `404.html` as pages, and no
   `pagefind/` directory.
 - A full build has `docs/index.html`.
+- No two `OrbitArt` illustrations on one page share an id.
 - No page or stylesheet loads a script, stylesheet, font or image from
   another host.
 - Every page except `404.html` has exactly one canonical link, to its
@@ -265,9 +267,10 @@ with a PR soon after rolling back.
 Launching means switching the production build from the holding page to the
 full site:
 
-1. **Write the real copy.** Replace every placeholder with it, and make sure
-   each claim is true in delocal at that point. `SITE_MODE=full npm run
-   build` must pass locally.
+1. **Write the real copy.** Replace every placeholder with it, and every
+   illustrative terminal with real output, or remove it. Review every
+   sentence, line by line, against delocal at that point. `SITE_MODE=full
+   npm run build` must pass locally.
 2. **Open a PR** that changes `PRODUCTION_MODE` in
    [`site.config.mjs`](site.config.mjs) from `"holding"` to `"full"`.
 3. **Merge it** once `check` is green. The `deploy` job ships it.
@@ -275,7 +278,7 @@ full site:
 ## Layout
 
 ```
-astro.config.mjs        Astro config; Starlight is added only in full mode
+astro.config.mjs        Astro config: routes / by mode; Starlight is added only in full mode
 site.config.mjs         PRODUCTION_MODE, REPO_URL, SITE_URL
 wrangler.jsonc          Workers static assets config (no Worker code)
 install/install.sh      the script served at /install
@@ -284,8 +287,8 @@ scripts/check-site.sh   checks a served site: home page, headers, robots rules, 
 scripts/smoke-test.sh   check-site and check-install against a deploy, with retries
 src/lib/mode.mjs        resolves SITE_MODE and SITE_ENV
 src/lib/build-hooks.mjs publishes /install, writes _headers and robots.txt, checks the output
-src/pages/              index (holding or landing, by mode) and 404
-src/components/         Holding, HoldingArt, Landing, Mark, Starlight overrides
+src/pages/              404 (astro.config.mjs routes / to Holding or Landing)
+src/components/         Holding, Landing, OrbitArt, Terminal, InstallCommand, Mark, Starlight overrides
 src/content/docs/docs/  docs pages (full mode), served under /docs/
 src/styles/             fonts, tokens, global, placeholder and Starlight styles
 design/mockup.pdf       the design reference; see DESIGN.md

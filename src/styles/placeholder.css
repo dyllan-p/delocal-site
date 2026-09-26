@@ -1,5 +1,6 @@
 /* Placeholder copy: <p class="ph">[Placeholder: what goes here]</p>.
-   A production build fails if any page still has one. */
+   A production build fails if any page still has one. It can also sit on a
+   heading, <h2 class="ph">, so the page outline stays in place. */
 .ph {
   margin: 0;
   padding: 16px 20px;
@@ -8,5 +9,8 @@
   color: var(--faint);
   font-family: var(--font-code);
   font-size: 14px;
+  font-weight: 400;
+  font-stretch: normal;
   line-height: 1.6;
+  letter-spacing: normal;
 }

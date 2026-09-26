@@ -19,10 +19,10 @@
   --rose: #ff8fa3;
   --green: #7ee2a8;
 
-  /* Machines always keep their colour. */
+  /* Machines in examples, one colour each. Amber never stands for a machine. */
   --laptop: var(--cyan);
-  --desk: var(--amber);
-  --nas: var(--violet);
+  --desk: var(--violet);
+  --nas: var(--rose);
 
   --font-display: "Martian Mono Variable", ui-monospace, monospace;
   --font-body: "Atkinson Hyperlegible Next Variable", system-ui, sans-serif;
