@@ -53,6 +53,11 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
 - **Secrets:** `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, as repo
   secrets.
 - **Rollback:** see README.md.
+- **workers.dev:** production is also served at the Worker's workers.dev
+  address. A host-specific `_headers` rule makes it noindex, and the
+  production smoke test checks it. See "Headers and indexing" in README.md.
+- **HSTS** comes from `_headers`. Zone-level HSTS stays off in the
+  dashboard, or the header is sent twice.
 
 ## Build modes
 
@@ -82,7 +87,10 @@ With no env vars set, a build produces the holding page. In full mode:
     pagefind directory;
   - a full build lacks `docs/index.html`;
   - a production build has placeholders;
-  - anything loads from another host.
+  - anything loads from another host;
+  - a page other than `404.html` lacks exactly one canonical link to
+    `SITE_URL` plus its path, or `404.html` isn't noindex;
+  - `_headers` sets a header twice for any request.
 
 Workers joins the values of every `_headers` rule that matches a path. So
 never set one header in two rules whose paths overlap. `/*` overlaps

@@ -1,10 +1,12 @@
 ---
-// The 404 page for both modes (Starlight's is disabled).
+// The 404 page for both modes (Starlight's is disabled). It is noindex, with
+// no canonical link: it is served at every unknown path, and at /404 itself
+// with status 200.
 import Mark from "../components/Mark.astro";
 import Base from "../layouts/Base.astro";
 ---
 
-<Base title="Not found · delocal" description="There is no page at this address.">
+<Base title="Not found · delocal" description="There is no page at this address." noindex>
   <main class="not-found">
     <a class="brand" href="/">
       <span class="brand-mark"><Mark /></span>

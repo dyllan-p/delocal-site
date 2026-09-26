@@ -35,7 +35,8 @@ default. Any other value fails the build.
 - **Full** is the landing page and the Starlight docs under `/docs/`. Most
   of it is placeholder copy for now.
 - **Preview** builds add `X-Robots-Tag: noindex, nofollow` to every
-  response and `Disallow: /` to `robots.txt`.
+  response and `Disallow: /` to `robots.txt`. Production builds add it only
+  on the workers.dev copy. See [Headers and indexing](#headers-and-indexing).
 
 A **production full build fails** while any page still has placeholder copy
 (`class="ph"` or the text `[Placeholder`). That stops the site launching
@@ -81,7 +82,7 @@ sh scripts/check-site.sh http://127.0.0.1:8787
   `Cache-Control: public, max-age=300`.
 - **Headers to watch.** Workers applies every `_headers` rule that matches a
   path and joins the values. So never set the same header in two rules
-  whose paths overlap, including `/*`.
+  whose paths overlap, including `/*`. The build fails if one is.
 - **Checking a server.**
   [`scripts/check-install.sh`](scripts/check-install.sh) checks a running
   server:
@@ -103,6 +104,42 @@ sh scripts/check-site.sh http://127.0.0.1:8787
   With `--run` it also pipes the script into `sh`, but only if every check
   passed. It exits non-zero on any failure.
 
+## Headers and indexing
+
+The build hook writes every header into `dist/_headers`:
+
+- **Security headers** on every response, in every environment:
+  `X-Content-Type-Options`, `Referrer-Policy`, `X-Frame-Options`,
+  `Permissions-Policy` and `Strict-Transport-Security: max-age=31536000`.
+  - HSTS has no `includeSubDomains`, because subdomains may come later.
+  - It has no `preload`, because preload is hard to undo.
+  - Keep HSTS off at the zone level in the Cloudflare dashboard (SSL/TLS →
+    Edge Certificates). Otherwise the header is sent twice.
+  - http:// already redirects to https://, through the zone's "Always Use
+    HTTPS" setting. That lives in the dashboard, not in this repo.
+- **The workers.dev copy.** Production is also served at the Worker's
+  workers.dev address, `delocal-site.<account subdomain>.workers.dev`.
+  - A production build gives that host `X-Robots-Tag: noindex, nofollow`,
+    with the rule `https://delocal-site.:subdomain.workers.dev/*`.
+  - A host placeholder matches exactly one DNS label. So the rule matches
+    neither delocal.sh nor the version and preview hosts, which are
+    `<version or alias>-delocal-site.<account subdomain>.workers.dev`.
+  - Preview builds set the header in `/*` instead.
+  - On version and preview URLs, Cloudflare sets its own
+    `X-Robots-Tag: noindex` in place of ours. So previews show `noindex`,
+    not `noindex, nofollow`. We keep our own header in case Cloudflare
+    stops.
+  - workers.dev serves plain http without redirecting. "Always Use HTTPS"
+    only covers the delocal.sh zone. Browsers use https anyway, because
+    `.dev` is on the HSTS preload list.
+- **Canonical links.** Every page has a
+  `<link rel="canonical">` to `https://delocal.sh` plus its path, in both
+  modes. Starlight adds its own on docs pages.
+  - The 404 page has none, and has `<meta name="robots" content="noindex">`
+    instead.
+  - That page is served at every unknown path, and at `/404` itself with
+    status 200.
+
 ## Other build checks
 
 After every build, the build hook also checks:
@@ -112,6 +149,11 @@ After every build, the build hook also checks:
 - A full build has `docs/index.html`.
 - No page or stylesheet loads a script, stylesheet, font or image from
   another host.
+- Every page except `404.html` has exactly one canonical link, to its
+  address on delocal.sh, and no robots noindex meta tag. `404.html` has the
+  noindex meta tag and no canonical link.
+- No header in `_headers` is set twice in one rule, or in two rules whose
+  URL patterns overlap.
 
 ## CI and deploys
 
@@ -129,8 +171,10 @@ every merged PR deploys:
 
 1. It builds with no `SITE_MODE` or `SITE_ENV`, so `PRODUCTION_MODE`
    decides what ships.
-2. It runs `wrangler deploy`.
-3. It smoke-tests https://delocal.sh.
+2. It runs `wrangler deploy`, and reads the workers.dev URL from wrangler's
+   list of deploy targets.
+3. It smoke-tests https://delocal.sh, and checks that the workers.dev URL is
+   noindex.
 
 Only one deploy runs at a time. A second push waits for the first to finish.
 
@@ -153,12 +197,23 @@ deployed site:
 
 - [`scripts/check-site.sh`](scripts/check-site.sh):
   - `/` returns 200 HTML;
-  - each security header appears exactly once;
-  - an unknown path returns the 404 page;
+  - each security header appears exactly once, with the expected value.
+    `Strict-Transport-Security` is only checked on https URLs, because
+    browsers ignore it over http;
+  - an unknown path returns the 404 page, which has a robots noindex meta
+    tag;
   - `_headers` is not served;
-  - robots rules match the environment. A production build must be
-    indexable, and a preview (`--preview`) must be noindex with
-    `Disallow: /`.
+  - robots rules match the environment:
+    - A production build must be indexable. `/` has no `X-Robots-Tag` or
+      robots meta tag saying noindex, and `robots.txt` allows crawling.
+    - A preview (`--preview`) must have at least one `X-Robots-Tag` saying
+      noindex, and `Disallow: /`.
+  - with `--workers-dev <url>`, that URL has at least one `X-Robots-Tag`
+    saying noindex. The deploy job passes the workers.dev URL.
+
+  The noindex checks test the outcome, not the header count or value.
+  Cloudflare replaces `X-Robots-Tag` on version and preview URLs. The build
+  check on `_headers` covers what we control.
 - `check-install.sh --run`, with the full https and redirect checks.
 
 It retries for up to 10 minutes (`SMOKE_TIMEOUT`), because the first deploy
@@ -225,7 +280,7 @@ site.config.mjs         PRODUCTION_MODE, REPO_URL, SITE_URL
 wrangler.jsonc          Workers static assets config (no Worker code)
 install/install.sh      the script served at /install
 scripts/check-install.sh
-scripts/check-site.sh   checks a served site: home page, headers, robots rules, 404
+scripts/check-site.sh   checks a served site: home page, headers, robots rules, 404, workers.dev
 scripts/smoke-test.sh   check-site and check-install against a deploy, with retries
 src/lib/mode.mjs        resolves SITE_MODE and SITE_ENV
 src/lib/build-hooks.mjs publishes /install, writes _headers and robots.txt, checks the output

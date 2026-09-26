@@ -3,16 +3,19 @@
 # until both pass or the time runs out. A first deploy has to provision the
 # custom domain and its certificate, which can take a few minutes.
 #
-# Usage: sh scripts/smoke-test.sh <base-url> [--preview]
+# Usage: sh scripts/smoke-test.sh <base-url> [--preview] [--workers-dev <url>]
 #
-#   --preview   Passed to check-site.sh: expect a preview build.
+# Options after <base-url> are passed to check-site.sh:
+#
+#   --preview            Expect a preview build.
+#   --workers-dev <url>  Also check that the workers.dev copy is noindex.
 #
 # SMOKE_TIMEOUT sets how long to keep trying, in seconds (default 600).
 # Exits non-zero, with the last attempt's output, if the checks never pass.
 set -eu
 
 [ $# -ge 1 ] || {
-	echo "usage: sh scripts/smoke-test.sh <base-url> [--preview]" >&2
+	echo "usage: sh scripts/smoke-test.sh <base-url> [--preview] [--workers-dev <url>]" >&2
 	exit 2
 }
 base=$1
