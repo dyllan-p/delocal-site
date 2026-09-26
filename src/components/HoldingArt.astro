@@ -1,0 +1,108 @@
+---
+// One file drawn as a cloud over a laptop, a desktop and a server: three dashed
+// orbits, a glow in each machine's colour and line-drawn machine icons around a
+// centre dot. Pure SVG, so it renders without JavaScript. Coordinates are
+// relative to the centre dot at (0, 0) and match the 1440 canvas at 1:1.
+---
+
+<svg class="holding-art" viewBox="-290 -220 580 440" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="holding-glow-laptop">
+      <stop class="laptop" offset="0" stop-opacity="0.55"></stop>
+      <stop class="laptop" offset="1" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="holding-glow-desk">
+      <stop class="desk" offset="0" stop-opacity="0.55"></stop>
+      <stop class="desk" offset="1" stop-opacity="0"></stop>
+    </radialGradient>
+    <radialGradient id="holding-glow-nas">
+      <stop class="nas" offset="0" stop-opacity="0.55"></stop>
+      <stop class="nas" offset="1" stop-opacity="0"></stop>
+    </radialGradient>
+  </defs>
+
+  <circle cx="-175" cy="-65" r="100" fill="url(#holding-glow-laptop)"></circle>
+  <circle cx="175" cy="-65" r="100" fill="url(#holding-glow-desk)"></circle>
+  <circle cx="0" cy="118" r="100" fill="url(#holding-glow-nas)"></circle>
+
+  <g class="orbits">
+    <ellipse rx="226" ry="123"></ellipse>
+    <ellipse rx="160" ry="168" transform="rotate(14)"></ellipse>
+    <ellipse rx="160" ry="168" transform="rotate(-14)"></ellipse>
+  </g>
+
+  <g class="particles">
+    <circle cx="0" cy="-71" r="2"></circle>
+    <circle cx="-92" cy="-41" r="2.5"></circle>
+    <circle cx="51" cy="-30" r="2.5"></circle>
+    <circle cx="92" cy="-51" r="2"></circle>
+    <circle cx="-51" cy="-20" r="2"></circle>
+    <circle cx="-123" cy="0" r="2"></circle>
+    <circle cx="123" cy="0" r="2"></circle>
+    <circle cx="-82" cy="23" r="2"></circle>
+    <circle cx="82" cy="23" r="2"></circle>
+    <circle cx="-31" cy="41" r="2.5"></circle>
+    <circle cx="31" cy="53" r="2.5"></circle>
+    <circle cx="0" cy="78" r="2"></circle>
+  </g>
+
+  <g class="machines">
+    <!-- laptop -->
+    <rect x="-200" y="-84" width="50" height="33" rx="3"></rect>
+    <path d="M-211 -43 H-139"></path>
+    <!-- desktop -->
+    <rect x="148" y="-88" width="55" height="37" rx="3"></rect>
+    <path d="M175.5 -51 V-39 M161 -39 H190"></path>
+    <!-- server -->
+    <rect x="-23" y="99" width="46" height="15" rx="3"></rect>
+    <rect x="-23" y="117" width="46" height="15" rx="3"></rect>
+    <path d="M-15.5 106.5 H-8.5 M-15.5 124.5 H-8.5"></path>
+  </g>
+
+  <circle class="centre-ring" r="16.5"></circle>
+  <circle class="centre-dot" r="7"></circle>
+</svg>
+
+<style>
+  .holding-art {
+    display: block;
+    width: 100%;
+    max-width: 580px;
+    height: auto;
+    overflow: visible;
+  }
+  .laptop {
+    stop-color: var(--laptop);
+  }
+  .desk {
+    stop-color: var(--desk);
+  }
+  .nas {
+    stop-color: var(--nas);
+  }
+  .orbits {
+    fill: none;
+    stroke: var(--rule-strong);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 4;
+    stroke-linecap: round;
+  }
+  .particles {
+    fill: var(--muted);
+  }
+  .machines {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .centre-ring {
+    fill: none;
+    stroke: var(--amber);
+    stroke-width: 1.5;
+  }
+  .centre-dot {
+    fill: var(--ink);
+  }
+</style>

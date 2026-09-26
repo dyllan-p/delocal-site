@@ -1,0 +1,46 @@
+---
+// The 404 page for both modes (Starlight's is disabled).
+import Mark from "../components/Mark.astro";
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Not found · delocal" description="There is no page at this address.">
+  <main class="not-found">
+    <a class="brand" href="/">
+      <span class="brand-mark"><Mark /></span>
+      <span class="wordmark">delocal</span>
+    </a>
+    <h1>Not found.</h1>
+    <p>There is no page at this address. <a href="/">Go to the home page</a>.</p>
+  </main>
+</Base>
+
+<style>
+  .not-found {
+    display: grid;
+    align-content: center;
+    gap: 28px;
+    min-height: 100vh;
+    min-height: 100svh;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: var(--rhythm) var(--gutter);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: fit-content;
+    font-size: 24px;
+    line-height: 1;
+    text-decoration: none;
+  }
+  p {
+    margin: 0;
+    font-size: 21px;
+  }
+  p a {
+    text-decoration-color: var(--amber);
+    text-underline-offset: 4px;
+  }
+</style>

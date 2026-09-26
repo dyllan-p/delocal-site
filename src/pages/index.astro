@@ -1,0 +1,9 @@
+---
+import Holding from "../components/Holding.astro";
+import Landing from "../components/Landing.astro";
+import { resolveMode } from "../lib/mode.mjs";
+
+const { siteMode } = resolveMode();
+---
+
+{siteMode === "full" ? <Landing /> : <Holding />}

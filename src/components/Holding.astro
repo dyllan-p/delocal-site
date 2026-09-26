@@ -1,0 +1,125 @@
+---
+// The holding page: the only public page until launch, and the only real copy
+// on the site. Matches the holding page in design/mockup.pdf.
+import { REPO_URL } from "../../site.config.mjs";
+import Base from "../layouts/Base.astro";
+import HoldingArt from "./HoldingArt.astro";
+import Mark from "./Mark.astro";
+
+const lede =
+  "A file sync tool being built to keep one folder the same on all your Linux and macOS machines, over Tailscale.";
+---
+
+<Base title="delocal" description={lede}>
+  <main class="holding">
+    <div class="intro">
+      <h1 class="brand">
+        <span class="brand-mark"><Mark width={50} /></span>
+        <span class="wordmark">delocal</span>
+      </h1>
+      <p class="lede">{lede}</p>
+      <p class="status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>In development. There are no releases yet, so there is nothing to install.</span>
+      </p>
+      <p class="repo"><a href={REPO_URL}>{REPO_URL.replace(/^https:\/\//, "")}</a></p>
+    </div>
+    <div class="art">
+      <HoldingArt />
+    </div>
+  </main>
+</Base>
+
+<style>
+  .holding {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100svh;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 48px clamp(24px, 8.333vw, 120px);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font: inherit;
+    letter-spacing: normal;
+  }
+  .brand .wordmark {
+    font-size: clamp(40px, 3.9vw, 56px);
+    line-height: 1;
+  }
+  .brand-mark {
+    flex: none;
+    /* Optically centre the dots on the x-height rather than the line box. */
+    margin-top: 0.12em;
+  }
+
+  .lede {
+    max-width: 520px;
+    margin: 28px 0 0;
+    color: var(--text-2);
+    font-size: clamp(20px, 1.667vw, 24px);
+    line-height: 1.5;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 28px 0 0;
+    padding: 9px 18px 9px 16px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 21px;
+    color: var(--text-2);
+    font-size: 16px;
+    line-height: 1.4;
+  }
+  .status-dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+
+  .repo {
+    margin: 28px 0 0;
+    font-family: var(--font-code);
+    font-size: 16px;
+  }
+  .repo a {
+    color: var(--text-2);
+    text-decoration: underline;
+    text-decoration-color: var(--amber);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 5px;
+  }
+  .repo a:hover {
+    color: var(--ink);
+  }
+
+  .art {
+    display: flex;
+    justify-content: center;
+  }
+
+  @media (max-width: 899.98px) {
+    .holding {
+      grid-template-columns: 1fr;
+      gap: 40px;
+      align-content: center;
+      padding-block: 56px;
+    }
+    .art {
+      max-width: 520px;
+      width: 100%;
+      margin: 0 auto;
+    }
+  }
+</style>

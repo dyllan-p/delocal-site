@@ -1,0 +1,79 @@
+/* Base styles for our own pages. Starlight pages use starlight.css instead. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text-2);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-stretch: 87.5%;
+  letter-spacing: -0.03em;
+}
+
+h1 {
+  font-size: clamp(38px, 4.17vw, 60px);
+  line-height: 1.08;
+}
+
+h2 {
+  font-size: clamp(28px, 2.78vw, 40px);
+  line-height: 1.15;
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-code);
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.wordmark {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-stretch: 112.5%;
+  letter-spacing: -0.02em;
+}
+
+/* The only motion on the site answers a click. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
