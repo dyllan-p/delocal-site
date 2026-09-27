@@ -162,6 +162,10 @@ After every build, the build hook also checks:
   noindex meta tag and no canonical link.
 - No header in `_headers` is set twice in one rule, or in two rules whose
   URL patterns overlap.
+- `og.png` is a 1200x630 PNG of 300 KB or less.
+- No other image is over 150 KB, such as the closing art's AVIF and WebP
+  files in `_astro/`.
+- Every page has exactly one `og:image`, `https://delocal.sh/og.png`.
 
 ## CI and deploys
 
@@ -208,6 +212,10 @@ deployed site:
   - each security header appears exactly once, with the expected value.
     `Strict-Transport-Security` is only checked on https URLs, because
     browsers ignore it over http;
+  - `og:image` on `/` is `https://delocal.sh/og.png`, and `/og.png` on the
+    server being checked returns 200 `image/png`. On production that is the
+    same URL. In CI it is `wrangler dev`, because delocal.sh won't have a new
+    `og.png` until the PR ships;
   - an unknown path returns the 404 page, which has a robots noindex meta
     tag;
   - `_headers` is not served;
@@ -268,6 +276,19 @@ Deployments tab in the Cloudflare dashboard.
 A rollback lasts until the next push to `main` deploys again. Fix `main`
 with a PR soon after rolling back.
 
+## Art
+
+The closing band's art and the share image, `/og.png`, are AI-generated with
+Google's Gemini, and carry its SynthID watermark. Both are composed from one
+source image, `art/source/closing.jpg`, by `scripts/compose-art.mjs`.
+
+[`art/README.md`](art/README.md) records the model, the exact prompt and the
+date. It also covers making new art, which needs `GEMINI_API_KEY`, and the
+art direction. The build itself never calls the API.
+
+The share image is on every page, in both modes. DESIGN.md's
+[Art](DESIGN.md#art) section lists its tags.
+
 ## Launching
 
 Launching means switching the production build from the holding page to the
@@ -288,12 +309,19 @@ astro.config.mjs        Astro config: routes / by mode; Starlight is added only 
 site.config.mjs         PRODUCTION_MODE, REPO_URL, SITE_URL
 wrangler.jsonc          Workers static assets config (no Worker code)
 install/install.sh      the script served at /install
+art/                    art prompts, the chosen source image and how the art was made (README.md)
+public/og.png           the share image, made by scripts/compose-art.mjs
 scripts/check-install.sh
-scripts/check-site.sh   checks a served site: home page, headers, robots rules, 404, workers.dev
+scripts/check-site.sh   checks a served site: home page, headers, robots rules, share image, 404, workers.dev
 scripts/smoke-test.sh   check-site and check-install against a deploy, with retries
+scripts/generate-art.mjs  makes art candidates with the Gemini API, within a 40-image budget
+scripts/contact-sheet.mjs the contact sheet for choosing art, art/candidates/index.html
+scripts/compose-art.mjs   the closing art and og.png from art/source/, with the mark and wordmark
 src/lib/mode.mjs        resolves SITE_MODE and SITE_ENV
 src/lib/build-hooks.mjs publishes /install, writes _headers and robots.txt, checks the output
 src/lib/ec-theme.mjs    the code-block colours for the docs (Expressive Code)
+src/lib/share-image.mjs the share image's meta tags, used by Base.astro and Starlight
+src/assets/             the closing art, which Astro serves as AVIF and WebP
 src/pages/              404 (astro.config.mjs routes / to Holding or Landing)
 src/components/         Holding, Landing, OrbitArt, Terminal, InstallCommand, Mark, Starlight overrides
 src/content/docs/docs/  docs pages (full mode), served under /docs/; the sidebar is in astro.config.mjs

@@ -1,7 +1,7 @@
 #!/bin/sh
 # Checks a served build of the site: the home page, the security headers,
-# robots rules for the environment and the 404 page. check-install.sh covers
-# /install.
+# robots rules for the environment, the share image and the 404 page.
+# check-install.sh covers /install.
 #
 # Usage: sh scripts/check-site.sh <base-url> [--preview] [--workers-dev <url>]
 #
@@ -18,8 +18,15 @@
 # Cloudflare sets its own X-Robots-Tag on version and preview URLs, in place of
 # ours.
 #
+# The share image: every build points og:image at https://delocal.sh/og.png
+# (SITE_URL in site.config.mjs). The image itself is fetched from <base-url>,
+# which is that URL when checking production. Elsewhere, such as wrangler dev
+# in CI, delocal.sh may not have this build's og.png yet.
+#
 # Exits non-zero if any check fails, including when curl cannot connect.
 set -eu
+
+share_image=https://delocal.sh/og.png
 
 usage() {
 	echo "usage: sh scripts/check-site.sh <base-url> [--preview] [--workers-dev <url>]" >&2
@@ -120,6 +127,18 @@ https://*) expect_header Strict-Transport-Security "max-age=31536000" ;;
 *) echo "skip  Strict-Transport-Security, which browsers ignore over http" ;;
 esac
 
+# The share image, named on /.
+og_tags=$(grep -Eo "<meta[^>]*property=[\"']?og:image[\"'][^>]*>" "$tmp/body" || true)
+og_count=$(printf '%s' "$og_tags" | grep -c . || true)
+og_value=$(printf '%s\n' "$og_tags" | sed -n "s/.*content=[\"']\([^\"']*\)[\"'].*/\1/p" | head -n 1)
+if [ "$og_count" = 1 ] && [ "$og_value" = "$share_image" ]; then
+	pass "og:image is $share_image"
+elif [ "$og_count" = 1 ]; then
+	fail "og:image is $og_value, expected $share_image"
+else
+	fail "$og_count og:image tags on /, expected exactly 1 ($share_image)"
+fi
+
 # Indexing, judged on / (the 404 page is always noindex).
 if [ "$preview" = 1 ]; then
 	if header_noindex; then
@@ -139,6 +158,13 @@ else
 		pass "/ has no robots noindex meta tag"
 	fi
 fi
+
+fetch "$base/og.png"
+if [ "$status" = 200 ]; then pass "/og.png is 200"; else fail "/og.png is $status, expected 200"; fi
+case $(header content-type) in
+image/png*) pass "/og.png is image/png" ;;
+*) fail "/og.png is $(header content-type), expected image/png" ;;
+esac
 
 # robots.txt
 fetch "$base/robots.txt"

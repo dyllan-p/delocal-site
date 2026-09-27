@@ -5,6 +5,7 @@ import { SITE_URL } from "./site.config.mjs";
 import buildHooks from "./src/lib/build-hooks.mjs";
 import ecTheme from "./src/lib/ec-theme.mjs";
 import { resolveMode } from "./src/lib/mode.mjs";
+import { shareImageMeta } from "./src/lib/share-image.mjs";
 
 const { siteMode, siteEnv } = resolveMode();
 
@@ -15,6 +16,9 @@ const docs = () =>
     title: "delocal",
     // src/pages/404.astro serves both modes.
     disable404Route: true,
+    // Starlight already sets og:title, og:description, og:url and
+    // twitter:card from each page. This adds the share image.
+    head: shareImageMeta.map((attrs) => ({ tag: "meta", attrs })),
     // Pages live in src/content/docs/docs/, so they are served under /docs/.
     // No editLink or lastUpdated: there are no "Edit page" links or
     // last-updated dates.
