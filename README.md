@@ -172,6 +172,8 @@ After every build, the build hook also checks:
 ## CI and deploys
 
 [`.github/workflows/check.yml`](.github/workflows/check.yml) has three jobs.
+[`.github/workflows/edge.yml`](.github/workflows/edge.yml) checks production
+daily; see [Cloudflare zone features](#cloudflare-zone-features).
 
 **`check`** runs on every pull request and on every push to `main`. `main`
 requires it to pass. It:
@@ -221,6 +223,10 @@ deployed site:
   - an unknown path returns the 404 page, which has a robots noindex meta
     tag;
   - `_headers` is not served;
+  - `/`, the 404 page and, when `/` links to it, `/docs/` load nothing from
+    another host or from `/cdn-cgi/`, and neither does the workers.dev `/`
+    with `--workers-dev`. See
+    [Cloudflare zone features](#cloudflare-zone-features);
   - robots rules match the environment:
     - A production build must be indexable. `/` has no `X-Robots-Tag` or
       robots meta tag saying noindex, and `robots.txt` allows crawling.
@@ -237,6 +243,44 @@ deployed site:
 It retries for up to 10 minutes (`SMOKE_TIMEOUT`), because the first deploy
 has to provision the custom domain and its certificate.
 
+### Cloudflare zone features
+
+Cloudflare zone features can change pages at the edge (Web Analytics, Rocket
+Loader, email obfuscation, Zaraz). Keep them off for delocal.sh.
+`check-site.sh` is what enforces it. Web Analytics was on once, and added a
+script from `static.cloudflareinsights.com` to every page, after the build
+had checked it.
+
+- **The check.** `check-site.sh` fetches `/`, the 404 page, `/docs/` when `/`
+  links to it, and the workers.dev `/`. It fails, and prints each URL, when
+  one of them:
+  - loads a script, stylesheet, font, image or iframe from another host, or
+    from `/cdn-cgi/`, a path only Cloudflare serves. Relative URLs are
+    resolved against the page's;
+  - has `/cdn-cgi/` anywhere else, such as in an inline script.
+
+  It sends a browser's `Accept` header, because Web Analytics only added its
+  script for requests that accept HTML.
+- **Which runs exercise it.** Only https://delocal.sh passes through the
+  zone. On previews, the workers.dev copy and `wrangler dev` in CI, the check
+  only sees our own output. So the runs that can catch a zone feature are the
+  deploy job's smoke test and the daily check.
+- **The daily check.** A zone feature can switch on with no deploy.
+  [`.github/workflows/edge.yml`](.github/workflows/edge.yml) runs
+  `check-site.sh` against https://delocal.sh and the workers.dev copy every
+  day at about 05:17 UTC. To run it by hand: the Actions tab, **edge**, then
+  **Run workflow**. It isn't a required check, deploys nothing and needs no
+  secrets.
+  - A failure fails the run. GitHub emails the failure to whoever last
+    changed the workflow's `cron` line.
+  - It reads the workers.dev URL from the repository variable
+    `WORKERS_DEV_URL` (Settings → Secrets and variables → Actions →
+    Variables), so the account subdomain stays out of the repo. The URL is in
+    the deploy job's log. A run fails while the variable is unset.
+  - GitHub disables scheduled workflows in public repos after 60 days
+    without repo activity. To turn it back on: the Actions tab, **edge**,
+    then **Enable workflow**.
+
 ### Secrets
 
 These are repository secrets:
@@ -244,6 +288,8 @@ These are repository secrets:
 - `CLOUDFLARE_API_TOKEN`: a token made from Cloudflare's "Edit Cloudflare
   Workers" template, covering the account and the `delocal.sh` zone.
 - `CLOUDFLARE_ACCOUNT_ID`.
+
+`edge.yml` uses no secrets, only the repository variable `WORKERS_DEV_URL`.
 
 ### The first deploy
 
@@ -329,7 +375,7 @@ art/                    art prompts, the chosen source image and how the art was
 public/og.png           the share image, made by scripts/compose-art.mjs
 public/apple-touch-icon.png  the home-screen icon, made by scripts/touch-icon.mjs
 scripts/check-install.sh
-scripts/check-site.sh   checks a served site: home page, headers, robots rules, share image, 404, workers.dev
+scripts/check-site.sh   checks a served site: home page, headers, robots rules, share image, 404, workers.dev, what pages load
 scripts/smoke-test.sh   check-site and check-install against a deploy, with retries
 scripts/generate-art.mjs  makes art candidates with the Gemini API, within a 40-image budget
 scripts/contact-sheet.mjs the contact sheet for choosing art, art/candidates/index.html

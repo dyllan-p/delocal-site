@@ -1,0 +1,40 @@
+name: edge
+
+# Cloudflare zone features can change pages at the edge with no deploy, as Web
+# Analytics did. So this runs check-site.sh against production every day, and
+# a run fails if a page loads anything from another host or from /cdn-cgi/.
+# It also catches any other check-site.sh check that stops passing.
+#
+# It is not a required check, and it deploys nothing. It needs no secrets: the
+# workers.dev URL is the repository variable WORKERS_DEV_URL, so the account
+# subdomain stays out of the repo. See "Cloudflare zone features" in README.md.
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  edge:
+    name: edge
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      # SITE_URL in site.config.mjs.
+      - name: Check https://delocal.sh
+        run: |
+          if [ -z "$WORKERS_DEV_URL" ]; then
+            echo "::error::Set the repository variable WORKERS_DEV_URL to the workers.dev URL from the deploy job's log."
+            exit 1
+          fi
+          sh scripts/check-site.sh https://delocal.sh --workers-dev "$WORKERS_DEV_URL"
+        env:
+          WORKERS_DEV_URL: ${{ vars.WORKERS_DEV_URL }}

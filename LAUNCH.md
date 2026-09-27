@@ -183,5 +183,10 @@ up`) and `safetyTerminal` (`delocal status` with held deletes), in
     a machine where installing delocal is fine;
   - the 404 page, docs search, and the share image when a link is pasted
     somewhere.
+- **Zone features.** Cloudflare zone features can change pages at the edge
+  (Web Analytics, Rocket Loader, email obfuscation, Zaraz). Keep them off
+  for delocal.sh. `check-site.sh` is what enforces it. After launch it
+  checks `/docs/` too, because the landing page links there. Check that the
+  deploy's smoke test and the next daily `edge` run both show it.
 - **Rolling back:** see README.md. A rollback lasts until the next push to
   `main`.
