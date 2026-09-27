@@ -11,7 +11,7 @@ const lede =
 ---
 
 <Base title="delocal" description={lede}>
-  <main class="holding">
+  <main id="main" class="holding">
     <div class="intro">
       <h1 class="brand">
         <span class="brand-mark"><Mark width={50} /></span>
@@ -93,12 +93,20 @@ const lede =
     font-family: var(--font-code);
     font-size: 16px;
   }
+  /* Padding on an inline link makes it a bigger target without moving the
+     text: at least 24px tall, and 44px on touch screens. */
   .repo a {
+    padding-block: 2px;
     color: var(--text-2);
     text-decoration: underline;
     text-decoration-color: var(--amber);
     text-decoration-thickness: 1.5px;
     text-underline-offset: 5px;
+  }
+  @media (pointer: coarse) {
+    .repo a {
+      padding-block: 12px;
+    }
   }
   .repo a:hover {
     color: var(--ink);

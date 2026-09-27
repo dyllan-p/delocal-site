@@ -8,6 +8,9 @@ covers commands and structure.
 **Read DESIGN.md before touching any page.** `design/mockup.pdf` is the
 visual reference. Where the two disagree, DESIGN.md and the tokens win.
 
+**LAUNCH.md** lists everything the launch PR must do. Read it before
+starting that PR.
+
 ## Rules
 
 - **Claim nothing the code doesn't yet do.**
@@ -22,7 +25,8 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
   - No stats, logos, testimonials or FAQ.
 - **Art is AI-generated** with Gemini. `art/README.md` records how. The
   closing art and `public/og.png` come from `scripts/compose-art.mjs`, so
-  never edit them by hand. Generating needs `GEMINI_API_KEY`: never print
+  never edit them by hand. Nor `public/apple-touch-icon.png`, which comes
+  from `scripts/touch-icon.mjs`. Generating needs `GEMINI_API_KEY`: never print
   it, log it, write it to a file or put it on a command line.
 - **Everything self-hosted.** No third-party fonts, scripts or images at
   runtime. The build fails if a page or stylesheet loads one from another
@@ -113,6 +117,8 @@ In full mode:
   - `_headers` sets a header twice for any request;
   - `og.png` isn't a 1200x630 PNG of 300 KB or less, or another image is
     over 150 KB;
+  - `apple-touch-icon.png` isn't a 180x180 PNG, or a page lacks exactly one
+    `apple-touch-icon` link to it;
   - a page lacks exactly one `og:image`, `https://delocal.sh/og.png`.
 
 Workers joins the values of every `_headers` rule that matches a path. So

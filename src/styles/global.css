@@ -58,6 +58,26 @@ a {
   outline-offset: 3px;
 }
 
+/* Hidden until it has focus, like the docs pages' skip link. */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-button);
+  background: var(--amber);
+  color: var(--bg);
+  text-decoration: none;
+  clip-path: inset(50%);
+}
+.skip-link:focus {
+  clip-path: none;
+}
+
 .wordmark {
   color: var(--ink);
   font-family: var(--font-display);

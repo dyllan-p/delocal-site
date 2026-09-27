@@ -163,6 +163,8 @@ After every build, the build hook also checks:
 - No header in `_headers` is set twice in one rule, or in two rules whose
   URL patterns overlap.
 - `og.png` is a 1200x630 PNG of 300 KB or less.
+- `apple-touch-icon.png` is a 180x180 PNG of 150 KB or less, and every page
+  links it exactly once, as `/apple-touch-icon.png`.
 - No other image is over 150 KB, such as the closing art's AVIF and WebP
   files in `_astro/`.
 - Every page has exactly one `og:image`, `https://delocal.sh/og.png`.
@@ -289,18 +291,32 @@ art direction. The build itself never calls the API.
 The share image is on every page, in both modes. DESIGN.md's
 [Art](DESIGN.md#art) section lists its tags.
 
+## Icons
+
+Every page links two icons from `public/`:
+
+- `favicon.svg`, the logo mark;
+- `apple-touch-icon.png`, the 180x180 home-screen icon.
+
+The touch icon is made from `favicon.svg` and the `--bg` token:
+
+```sh
+node scripts/touch-icon.mjs
+```
+
+Run it again if the mark or `--bg` changes. The same inputs give the same
+bytes. See [Icons](DESIGN.md#components) in DESIGN.md.
+
 ## Launching
 
-Launching means switching the production build from the holding page to the
-full site:
-
-1. **Write the real copy.** Replace every placeholder with it, and every
-   illustrative terminal with real output, or remove it. Review every
-   sentence, line by line, against delocal at that point. `SITE_MODE=full
-   npm run build` must pass locally.
-2. **Open a PR** that changes `PRODUCTION_MODE` in
-   [`site.config.mjs`](site.config.mjs) from `"holding"` to `"full"`.
-3. **Merge it** once `check` is green. The `deploy` job ships it.
+Launching switches production from the holding page to the full site, in one
+PR. [LAUNCH.md](LAUNCH.md) lists everything that PR must do:
+- the real copy;
+- real terminal sessions;
+- the real installer, and how it stays in sync;
+- flipping `PRODUCTION_MODE` in [`site.config.mjs`](site.config.mjs) to
+  `"full"`;
+- the checks, before and after merge.
 
 ## Layout
 
@@ -311,12 +327,14 @@ wrangler.jsonc          Workers static assets config (no Worker code)
 install/install.sh      the script served at /install
 art/                    art prompts, the chosen source image and how the art was made (README.md)
 public/og.png           the share image, made by scripts/compose-art.mjs
+public/apple-touch-icon.png  the home-screen icon, made by scripts/touch-icon.mjs
 scripts/check-install.sh
 scripts/check-site.sh   checks a served site: home page, headers, robots rules, share image, 404, workers.dev
 scripts/smoke-test.sh   check-site and check-install against a deploy, with retries
 scripts/generate-art.mjs  makes art candidates with the Gemini API, within a 40-image budget
 scripts/contact-sheet.mjs the contact sheet for choosing art, art/candidates/index.html
 scripts/compose-art.mjs   the closing art and og.png from art/source/, with the mark and wordmark
+scripts/touch-icon.mjs    public/apple-touch-icon.png from favicon.svg and --bg
 src/lib/mode.mjs        resolves SITE_MODE and SITE_ENV
 src/lib/build-hooks.mjs publishes /install, writes _headers and robots.txt, checks the output
 src/lib/ec-theme.mjs    the code-block colours for the docs (Expressive Code)
@@ -327,6 +345,7 @@ src/components/         Holding, Landing, OrbitArt, Terminal, InstallCommand, Ma
 src/content/docs/docs/  docs pages (full mode), served under /docs/; the sidebar is in astro.config.mjs
 src/styles/             fonts, tokens, global, placeholder and Starlight styles
 design/mockup.pdf       the design reference; see DESIGN.md
+LAUNCH.md               everything the launch PR must do
 ```
 
 ## Licence

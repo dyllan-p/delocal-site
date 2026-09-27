@@ -100,13 +100,19 @@ const command = `curl -fsSL ${new URL("/install", SITE_URL).href} | sh`;
   .command:focus-visible {
     outline-offset: 2px;
   }
+  /* On touch screens the command is a 44px target: a tap selects it all. */
+  @media (pointer: coarse) {
+    .command {
+      padding-block: 9px;
+    }
+  }
 
   /* No display rule here, so the hidden attribute still hides it. */
   .copy {
     flex: none;
     /* Wide enough for "Copied", so the box doesn't shift when it changes. */
     min-width: calc(6ch + 28px);
-    height: 42px;
+    height: 44px;
     padding: 0 14px;
     border: 0;
     border-radius: 8px;

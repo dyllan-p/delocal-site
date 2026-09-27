@@ -26,6 +26,8 @@ const canonical = new URL(Astro.url.pathname, SITE_URL).href;
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="delocal" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {/* A noindex page, such as 404, is served at many addresses, so it has no og:url. */}
@@ -35,8 +37,12 @@ const canonical = new URL(Astro.url.pathname, SITE_URL).href;
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#14152a" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {/* Made by scripts/touch-icon.mjs. */}
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
   <body>
+    {/* Every page's <main> has id="main". */}
+    <a class="skip-link" href="#main">Skip to content</a>
     <slot />
   </body>
 </html>

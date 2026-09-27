@@ -38,6 +38,10 @@
   --sl-color-hairline-shade: var(--rule);
   --sl-color-backdrop-overlay: rgb(14 15 32 / 0.72);
 
+  /* Nothing is smaller than 14px. Starlight's two smallest sizes are 12 and
+     13px, used for "On this page" and the search shortcut. */
+  --sl-text-2xs: 14px;
+  --sl-text-xs: 14px;
   --sl-text-body: 17px;
   --sl-line-height: 1.6;
   --sl-text-h1: clamp(30px, 2.78vw, 40px);
@@ -51,6 +55,7 @@
      height, so the rule sits just below the row. */
   --sl-nav-height: 65px;
   --sl-nav-pad-x: 16px;
+  --sl-nav-gap: 12px;
   --sl-menu-button-size: 40px;
   --sl-sidebar-pad-x: 16px;
 }
@@ -61,6 +66,16 @@
   :root {
     --sl-nav-height: 101px;
     --sl-nav-pad-x: 24px;
+    --sl-nav-gap: var(--sl-content-pad-x);
+  }
+}
+
+/* Touch screens: every link and button is at least 44x44. With a fine
+   pointer the minimum is 24x24, so the sidebar and "On this page" keep their
+   density. */
+@media (pointer: coarse) {
+  :root {
+    --sl-menu-button-size: 44px;
   }
 }
 
@@ -70,15 +85,29 @@
 }
 
 /* ---- Header ---- */
-/* The site title needs room for its focus ring: the wrapper clips. */
+/* The site title needs room for its focus ring (3px offset and 2px wide), and
+   on touch screens for its 44px targets and their rings: the wrapper clips. */
 .header .title-wrapper {
   padding: 6px;
   margin: -6px;
+}
+@media (pointer: coarse) {
+  .header .title-wrapper {
+    padding-block: 17px;
+    margin-block: -17px;
+  }
 }
 
 /* Search opens a dialog, so it is a quiet box rather than an amber button. */
 site-search button[data-open-modal] {
   color: var(--ink);
+}
+@media (pointer: coarse) {
+  site-search button[data-open-modal] {
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 @media (min-width: 50rem) {
   site-search button[data-open-modal] {
@@ -99,7 +128,7 @@ site-search button[data-open-modal] {
     background: var(--raised);
     color: var(--muted);
     font-family: var(--font-code);
-    font-size: 12px;
+    font-size: 14px;
   }
   site-search button[data-open-modal] kbd kbd {
     font-family: inherit;
@@ -138,7 +167,10 @@ site-search dialog {
     border-radius: var(--radius-card);
   }
 }
+/* Pagefind scales its UI to 0.8 by default, which puts result text at 11 to
+   13px. At 1 nothing is under 14px. */
 #starlight__search {
+  --pagefind-ui-scale: 1;
   --pagefind-ui-border: var(--rule-strong);
   --pagefind-ui-border-radius: var(--radius-button);
 }
@@ -148,7 +180,7 @@ site-search dialog {
 .sidebar-content summary .large {
   color: var(--muted);
   font-family: var(--font-code);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
 }
 .sidebar-content ul ul li {
@@ -170,6 +202,14 @@ site-search dialog {
 .sidebar-content ul ul a:hover {
   color: var(--ink);
 }
+@media (pointer: coarse) {
+  .sidebar-content summary,
+  .sidebar-content ul ul a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
 /* The current page: a quiet surface with a 2px amber marker, not a filled
    block. */
 .sidebar-content a[aria-current="page"] {
@@ -183,8 +223,16 @@ site-search dialog {
 #starlight__on-this-page {
   color: var(--muted);
   font-family: var(--font-code);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
+}
+@media (pointer: coarse) {
+  .right-sidebar-panel a,
+  mobile-starlight-toc a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+  }
 }
 
 /* ---- Content ---- */
@@ -236,6 +284,14 @@ h1#_top,
   display: none;
 }
 
+/* Starlight widens each heading's anchor link with an ::after that doesn't
+   affect layout. On touch screens, make that area 44x44. */
+@media (pointer: coarse) {
+  .sl-markdown-content .sl-anchor-link::after {
+    inset: calc(50% - 22px);
+  }
+}
+
 .pagination-links a {
   border-color: var(--rule);
   border-radius: var(--radius-install);
@@ -248,9 +304,16 @@ h1#_top,
   font-size: 18px;
 }
 
-.sl-skip-link {
+/* Like the skip link on our own pages (global.css). */
+.sl-skip-link:focus {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-button);
   background: var(--amber);
   color: var(--bg);
+  box-shadow: none;
 }
 
 /* ---- Code blocks (Expressive Code) ---- */
@@ -259,12 +322,14 @@ h1#_top,
    a click. Expressive Code's script puts a "Copied!" message in an aria-live
    region next to the button; it stays there for screen readers, and the
    button's label shows it. The button sits on the code background, so a line
-   that scrolls sideways stops short of it, as in the install box. */
+   that scrolls sideways stops short of it, as in the install box. Both right
+   corners of that background are rounded: in a one-line block it reaches the
+   bottom, and a square corner there would cover the border's curve. */
 .expressive-code .copy {
   inset-block-start: 1px;
   inset-inline-end: 1px;
-  padding: 8px 8px 8px 12px;
-  border-radius: 0 calc(var(--radius-install) - 1px) 0 0;
+  padding: 7px 8px 7px 12px;
+  border-radius: 0 calc(var(--radius-install) - 1px) calc(var(--radius-install) - 1px) 0;
   background: var(--terminal);
 }
 /* Room for the button at the end of the first line. */
@@ -274,7 +339,7 @@ h1#_top,
 .expressive-code .copy button {
   width: auto;
   min-width: calc(6ch + 28px);
-  height: 42px;
+  height: 44px;
   padding: 0 14px;
   border-radius: 8px;
   background: var(--raised);
@@ -296,7 +361,7 @@ h1#_top,
   position: static;
   margin: 0;
   background: none;
-  line-height: 42px;
+  line-height: 44px;
   -webkit-mask-image: none;
   mask-image: none;
 }
