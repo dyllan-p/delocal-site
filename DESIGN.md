@@ -133,13 +133,21 @@ are places and the amber centre is the file spread across them (see
 
 The outer dots touch the grid edges. It is
 [`Mark.astro`](src/components/Mark.astro) and `public/favicon.svg`. It shows at
-44px in the nav and the docs header, 32px in the landing page's footer,
-50px next to the holding page's wordmark, and about 103px in the share image
-(see [Art](#art)).
+44px in the nav and the docs header (36px there under 800px), 32px in the
+landing page's footer, 50px next to the holding page's wordmark, 132px in the
+home-screen icon, and about 103px in the share image (see [Art](#art)).
+
+**Icons.** Every page links two:
+- `public/favicon.svg`, the mark on a transparent square;
+- `public/apple-touch-icon.png`, the home-screen icon: the mark 132px wide,
+  centred on `--bg` at 180x180, with no transparency, since iOS fills it with
+  black. [`touch-icon.mjs`](scripts/touch-icon.mjs) makes it from
+  `favicon.svg` and the `--bg` token, so never edit it by hand. The build
+  checks its size and that every page links it.
 
 **Wordmark.** "delocal" in lower case, set as described under
-[Type](#type), 14–18px after the mark. It is 24px in the nav, and 56px on the
-holding page and in the share image.
+[Type](#type), 14–18px after the mark. It is 24px in the nav (20px in the docs
+header under 800px), and 56px on the holding page and in the share image.
 
 **Status pill.** 1px `--rule-strong` border, fully round, an 8px amber dot,
 then 14–16px `--text-2` text.
@@ -150,7 +158,7 @@ then 14–16px `--text-2` text.
 **Install box.** [`InstallCommand.astro`](src/components/InstallCommand.astro).
 `--terminal` background, 1px `--rule` border, radius 12, 60px tall. Inside:
 an amber `$`, the command in JetBrains Mono 16px, and a "Copy" button on
-the right (`--raised`, radius 8).
+the right (`--raised`, radius 8, 44px tall).
 
 - **The command** is always `curl -fsSL https://delocal.sh/install | sh`,
   built from `SITE_URL`. When it is wider than the box, it scrolls sideways
@@ -202,8 +210,13 @@ the right (`--raised`, radius 8).
   page outline and the section labels.
 - **Text:** the text names what goes there, such as `[Placeholder heading:
   the safety promise]`.
-- **Size:** on the landing page, each box's minimum height matches the
-  copy it stands in for, so the page keeps the mockup's proportions.
+- **Padding:** every placeholder has the same inner padding, 16px 20px,
+  whatever it stands in for.
+- **Size:** on the landing page, the multi-line boxes keep a minimum height
+  from the copy they stand in for. The mockup's section heights are not a
+  target while placeholders stand: a one-line box is taller than a line of
+  copy, so sections run taller than in the mockup. Real copy sets the heights
+  at launch.
 
 ## Motion
 
@@ -211,6 +224,35 @@ None, except what answers a click, such as a "Copied" state on the Copy
 button. There is no transition on hover or scroll, and nothing animates on
 load. `prefers-reduced-motion: reduce` turns off any animation and
 transition.
+
+In the docs, the only motion is Starlight's sidebar caret, which turns when a
+group opens or closes. It answers a click.
+
+## Accessibility
+
+These hold on every page, in both modes.
+
+- **Skip link.** Every page starts with a "Skip to content" link, hidden until
+  it has focus. It shows at the top left: amber with `--bg` text, radius 10,
+  44px tall.
+  - On our own pages it is in [`Base.astro`](src/layouts/Base.astro) and
+    jumps to `<main id="main">`.
+  - Starlight has its own, styled to match.
+- **Focus.** Everything focusable gets a 2px amber outline, 3px out, from the
+  global `:focus-visible` rule. A wrapper that clips, such as the docs site
+  title's, leaves room for it.
+- **Targets.**
+  - On touch screens (`pointer: coarse`), every link and button is at least
+    44x44px.
+  - With a fine pointer the minimum is 24x24 (WCAG 2.2 AA, 2.5.8), so the docs
+    sidebar and "On this page" keep their density.
+  - Both Copy buttons are 44px tall everywhere.
+  - A negative margin, or padding on an inline link, grows a target without
+    moving anything around it.
+- **Text.** Nothing is smaller than 14px, except the terminal's title (13px)
+  and "illustrative" tag (12px). In the docs that covers Starlight's two
+  smallest sizes and Pagefind's search results.
+- **Motion.** See [Motion](#motion).
 
 ## Art
 
@@ -273,9 +315,11 @@ token colour, so no seam shows.
   - `og:description`, which repeats the meta description, so the production
     guard catches a placeholder in either;
   - `og:url`, left off the noindex 404 page;
+  - `og:type` as `website`, and `og:site_name` as `delocal`;
   - `twitter:card` as `summary_large_image`.
 
-  On docs pages, Starlight adds its own versions of these.
+  On docs pages, Starlight adds its own versions of these, with `og:type` as
+  `article`.
 
 ## Implementation notes
 
@@ -457,6 +501,10 @@ full-width `--rule` bottom rule, as on the landing nav.
   [`SocialIcons`](src/components/starlight/SocialIcons.astro) override.
 - **Under 800px:** one 64px row, with the mark and wordmark, "Docs", a
   search icon and the menu button. GitHub moves into the menu.
+  - The brand is 5/6 of its size there: a 36px mark, a 13px gap and a 20px
+    wordmark, with 14px either side of the rule.
+  - The row's gaps are 12px, so everything fits at 360px, even with 44px
+    search and menu buttons on touch screens.
 
 **Colour.** Backgrounds, rules and text use the tokens. By the colour rule,
 amber is only:
@@ -472,12 +520,12 @@ The current heading under "On this page" and search highlights stay neutral.
   h3 21px, and h1 and h2 scale down with `clamp()` to 30px and 24px.
 - **Body:** Atkinson Hyperlegible Next at 17px / 1.6.
 - **Code:** JetBrains Mono at 15px on 24px lines.
-- **Labels:** sidebar group labels and "On this page" are JetBrains Mono 13px
+- **Labels:** sidebar group labels and "On this page" are JetBrains Mono 14px
   in `--muted`, like the landing page's step labels.
 
 **Sidebar.** Links are 15px `--text-2`. The current page has a quiet
 `--surface` background and a 2px amber marker on its left, not a filled
-block.
+block. On touch screens each row is 44px tall.
 
 **Code blocks** (Expressive Code) look like the install box:
 - `--terminal` background, a 1px `--rule` border and `--radius-install`
@@ -488,7 +536,7 @@ block.
   tokens.
 
 **The Copy button** is Expressive Code's own, restyled like InstallCommand's:
-- "Copy" in JetBrains Mono 14px on `--raised`, radius 8, 42px tall, and
+- "Copy" in JetBrains Mono 14px on `--raised`, radius 8, 44px tall, and
   always visible;
 - after a click it reads "Copied", and Expressive Code announces "Copied!"
   in an aria-live region;

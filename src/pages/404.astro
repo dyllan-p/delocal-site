@@ -7,7 +7,7 @@ import Base from "../layouts/Base.astro";
 ---
 
 <Base title="Not found · delocal" description="There is no page at this address." noindex>
-  <main class="not-found">
+  <main id="main" class="not-found">
     <a class="brand" href="/">
       <span class="brand-mark"><Mark /></span>
       <span class="wordmark">delocal</span>
@@ -44,5 +44,18 @@ import Base from "../layouts/Base.astro";
   p a {
     text-decoration-color: var(--amber);
     text-underline-offset: 4px;
+    white-space: nowrap;
+  }
+
+  /* Touch screens: links are at least 44px tall. Negative margin on the brand,
+     and padding on the inline link, keep everything else in place. */
+  @media (pointer: coarse) {
+    .brand {
+      padding-block: 10px;
+      margin-block: -10px;
+    }
+    p a {
+      padding-block: 8px;
+    }
   }
 </style>

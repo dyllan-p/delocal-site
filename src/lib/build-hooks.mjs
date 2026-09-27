@@ -4,8 +4,8 @@
 //  2. Writes dist/_headers and dist/robots.txt for Cloudflare Workers.
 //  3. Checks the output matches the build mode (see verifyOutput). A
 //     production build also fails on placeholder copy and illustrative
-//     examples, naming each one. Every build checks the share image and the
-//     size of every image it serves.
+//     examples, naming each one. Every build checks the share image, the
+//     home-screen icon and the size of every image it serves.
 //
 // Any failed check throws, which fails the build.
 import { spawnSync } from "node:child_process";
@@ -26,6 +26,10 @@ const WORKER_NAME = "delocal-site";
 // the site serves, such as the landing page's closing art in /_astro/.
 const SHARE_IMAGE = { file: "og.png", width: 1200, height: 630, maxBytes: 300 * 1024 };
 const MAX_IMAGE_BYTES = 150 * 1024;
+// The home-screen icon, public/apple-touch-icon.png, made by
+// scripts/touch-icon.mjs. Every page links it.
+const TOUCH_ICON = { file: "apple-touch-icon.png", width: 180, height: 180, maxBytes: MAX_IMAGE_BYTES };
+const TOUCH_ICON_HREF = `/${TOUCH_ICON.file}`;
 const IMAGE_FILE = /\.(avif|webp|png|jpe?g|gif)$/i;
 
 export default function buildHooks({ siteMode, siteEnv }) {
@@ -199,8 +203,9 @@ async function verifyOutput(outDir, siteMode, siteEnv) {
     problems.push("full build is missing docs/index.html");
   }
 
-  problems.push(...(await checkShareImage(outDir, files)));
-  for (const file of files.filter((f) => IMAGE_FILE.test(f) && f !== SHARE_IMAGE.file)) {
+  problems.push(...(await checkPng(outDir, files, SHARE_IMAGE)));
+  problems.push(...(await checkPng(outDir, files, TOUCH_ICON)));
+  for (const file of files.filter((f) => IMAGE_FILE.test(f) && f !== SHARE_IMAGE.file && f !== TOUCH_ICON.file)) {
     const { size } = await stat(path.join(outDir, file));
     if (size > MAX_IMAGE_BYTES) problems.push(`${file} is ${kb(size)}, over the ${kb(MAX_IMAGE_BYTES)} limit for images`);
   }
@@ -211,6 +216,7 @@ async function verifyOutput(outDir, siteMode, siteEnv) {
     if (!file.endsWith(".html")) continue;
     problems.push(...checkIndexing(file, text));
     problems.push(...checkShareMeta(file, text));
+    problems.push(...checkTouchIconLink(file, text));
     problems.push(...checkOrbitArtIds(file, text));
     if (siteEnv === "production") {
       for (const name of placeholders(text)) problems.push(`${file} has placeholder copy: ${name}`);
@@ -263,9 +269,9 @@ function checkIndexing(file, html) {
 
 const kb = (bytes) => `${Math.round(bytes / 1024)} KB`;
 
-// og.png is a PNG of the right size, and small enough.
-async function checkShareImage(outDir, files) {
-  const { file, width, height, maxBytes } = SHARE_IMAGE;
+// A PNG from public/, such as og.png, is a PNG of the right size, and small
+// enough.
+async function checkPng(outDir, files, { file, width, height, maxBytes }) {
   if (!files.includes(file)) return [`the build has no ${file} (it comes from public/)`];
   const data = await readFile(path.join(outDir, file));
   const problems = [];
@@ -286,6 +292,16 @@ function checkShareMeta(file, html) {
     .map((tag) => /\scontent\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag)?.slice(1).find((v) => v !== undefined) ?? "(no content)");
   if (images.length === 1 && images[0] === SHARE_IMAGE_URL) return [];
   return [`${file} has og:image ${images.join(", ") || "none"}, expected exactly one: ${SHARE_IMAGE_URL}`];
+}
+
+// Every page links the home-screen icon exactly once.
+function checkTouchIconLink(file, html) {
+  const hrefs = [...html.matchAll(/<link\b[^>]*>/gi)]
+    .map(([tag]) => tag)
+    .filter((tag) => /\srel\s*=\s*["']?apple-touch-icon["'\s>/]/i.test(tag))
+    .map((tag) => /\shref\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag)?.slice(1).find((v) => v !== undefined) ?? "(no href)");
+  if (hrefs.length === 1 && hrefs[0] === TOUCH_ICON_HREF) return [];
+  return [`${file} links apple-touch-icon ${hrefs.join(", ") || "none"}, expected exactly one: ${TOUCH_ICON_HREF}`];
 }
 
 // Names each placeholder a page still has: <p class="ph">[Placeholder: ...]</p>,

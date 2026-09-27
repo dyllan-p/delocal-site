@@ -54,4 +54,35 @@ import Mark from "../Mark.astro";
   .docs-link:hover {
     color: var(--ink);
   }
+
+  /* Under Starlight's 800px breakpoint the header is one 64px row, which also
+     holds search and the menu button. The brand is 5/6 of the nav's size and
+     the gaps are tighter, so "Docs" still fits at 360px. */
+  @media (max-width: 49.99rem) {
+    .docs-title,
+    .docs-link {
+      gap: 14px;
+    }
+    .brand {
+      gap: 13px;
+      font-size: 20px;
+    }
+    .brand-mark :global(.mark) {
+      width: 36px;
+      height: auto;
+    }
+    .docs-link::before {
+      height: 20px;
+    }
+  }
+
+  /* Touch screens: 44px targets. The negative margin keeps the header's
+     layout, and starlight.css pads the clipping wrapper to match. */
+  @media (pointer: coarse) {
+    .brand,
+    .docs-link {
+      min-height: 44px;
+      margin-block: -12px;
+    }
+  }
 </style>

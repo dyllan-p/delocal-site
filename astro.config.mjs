@@ -17,8 +17,12 @@ const docs = () =>
     // src/pages/404.astro serves both modes.
     disable404Route: true,
     // Starlight already sets og:title, og:description, og:url and
-    // twitter:card from each page. This adds the share image.
-    head: shareImageMeta.map((attrs) => ({ tag: "meta", attrs })),
+    // twitter:card from each page. This adds the share image, and the
+    // home-screen icon from scripts/touch-icon.mjs, as Base.astro does.
+    head: [
+      ...shareImageMeta.map((attrs) => ({ tag: "meta", attrs })),
+      { tag: "link", attrs: { rel: "apple-touch-icon", href: "/apple-touch-icon.png" } },
+    ],
     // Pages live in src/content/docs/docs/, so they are served under /docs/.
     // No editLink or lastUpdated: there are no "Edit page" links or
     // last-updated dates.

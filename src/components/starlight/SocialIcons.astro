@@ -7,11 +7,22 @@ import { REPO_URL } from "../../../site.config.mjs";
 <a class="social-link" href={REPO_URL}>GitHub</a>
 
 <style>
+  /* At least 24px tall, and 44x44 on touch screens. */
   .social-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
     color: var(--text-2);
     font-size: 15px;
     line-height: 1;
     text-decoration: none;
+  }
+  @media (pointer: coarse) {
+    .social-link {
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
+    }
   }
   .social-link:hover {
     color: var(--ink);

@@ -54,7 +54,7 @@ const safetyTerminal: Line[] = [
     </div>
   </header>
 
-  <main class="page">
+  <main id="main" class="page">
     <section class="hero split" aria-labelledby="hero-heading">
       <div class="hero-text">
         <p class="status">
@@ -64,7 +64,7 @@ const safetyTerminal: Line[] = [
         <h1 id="hero-heading" class="ph hero-heading">[Placeholder heading: what delocal is, in about four short lines]</h1>
         <p class="ph hero-lede">[Placeholder: the lede, two or three lines on what delocal does and for whom]</p>
         <div class="hero-install"><InstallCommand copy /></div>
-        <p class="ph ph-line hero-note">[Placeholder: "Needs Tailscale. Linux and macOS."]</p>
+        <p class="ph hero-note">[Placeholder: "Needs Tailscale. Linux and macOS."]</p>
       </div>
       <div class="hero-terminal">
         <Terminal title="~/Sync" label="delocal up in ~/Sync, syncing with two other machines" lines={heroTerminal} />
@@ -101,7 +101,7 @@ const safetyTerminal: Line[] = [
     </section>
 
     <section id="install" class="start" aria-labelledby="start-heading">
-      <h2 id="start-heading" class="ph ph-heading-line start-heading">[Placeholder heading: getting started]</h2>
+      <h2 id="start-heading" class="ph start-heading">[Placeholder heading: getting started]</h2>
       <ol class="steps">
         <li class="step">
           <p class="step-label">1 Install</p>
@@ -112,13 +112,13 @@ const safetyTerminal: Line[] = [
           <p class="ph step-ph">[Placeholder: step 2, its label and command]</p>
         </li>
       </ol>
-      <p class="ph ph-line start-note">[Placeholder: one line on setting up the next machine, with a link to the docs]</p>
+      <p class="ph start-note">[Placeholder: one line on setting up the next machine, with a link to the docs]</p>
     </section>
 
     <section class="closing" aria-labelledby="closing-heading">
       <div class="panel">
         <div class="panel-text">
-          <h2 id="closing-heading" class="ph ph-heading-line closing-heading">[Placeholder heading: following the build]</h2>
+          <h2 id="closing-heading" class="ph closing-heading">[Placeholder heading: following the build]</h2>
           <p class="ph closing-line">[Placeholder: one line on building in the open]</p>
           <a class="button" href={REPO_URL}>Watch on GitHub</a>
         </div>
@@ -155,16 +155,9 @@ const safetyTerminal: Line[] = [
 </Base>
 
 <style>
-  /* Heights of the placeholder boxes follow the copy they stand in for, so
-     the layout matches the mockup until the copy lands. */
-  .ph-line {
-    padding-block: 1px;
-    border-radius: 6px;
-    line-height: 22px;
-  }
-  .ph-heading-line {
-    padding-block: 11px;
-  }
+  /* Every placeholder has the padding from placeholder.css. The multi-line
+     boxes keep a minimum height from the copy they stand in for, but the
+     mockup's section heights are not a target: real copy sets them. */
 
   /* ---- Frame ---- */
   .nav-inner,
@@ -217,6 +210,9 @@ const safetyTerminal: Line[] = [
   }
   .nav-links a,
   .footer-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
     color: var(--text-2);
     text-decoration: none;
   }
@@ -340,10 +336,6 @@ const safetyTerminal: Line[] = [
     padding: 0;
     list-style: none;
   }
-  .terms .ph {
-    padding-block: 8px;
-  }
-
   /* ---- Get started ---- */
   .start {
     padding-top: var(--rhythm);
@@ -435,6 +427,21 @@ const safetyTerminal: Line[] = [
     display: flex;
     gap: 28px;
     font-size: 15px;
+  }
+
+  /* ---- Touch screens: links are at least 44x44 ---- */
+  @media (pointer: coarse) {
+    /* The negative margin keeps the nav's layout. */
+    .brand {
+      padding-block: 10px;
+      margin-block: -10px;
+    }
+    .nav-links a,
+    .footer-links a {
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
+    }
   }
 
   /* ---- Narrow screens: one column ---- */
