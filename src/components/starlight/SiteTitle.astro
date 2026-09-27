@@ -1,0 +1,57 @@
+---
+// Replaces Starlight's site title. The mark and wordmark link to the home
+// page, as in the landing nav, and "Docs" after them links to the docs home.
+import Mark from "../Mark.astro";
+---
+
+<span class="docs-title">
+  <a class="brand" href="/">
+    <span class="brand-mark"><Mark /></span>
+    <span class="wordmark" translate="no">delocal</span>
+  </a>
+  <a class="docs-link" href="/docs/">Docs</a>
+</span>
+
+<style>
+  .docs-title {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-width: 0;
+  }
+  .brand {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 16px;
+    color: var(--ink);
+    font-size: 24px;
+    line-height: 1;
+    text-decoration: none;
+  }
+  .wordmark {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-stretch: 112.5%;
+    letter-spacing: -0.02em;
+  }
+  /* "Docs" sits after a short rule, at the size of the landing nav's links. */
+  .docs-link {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1;
+    text-decoration: none;
+  }
+  .docs-link::before {
+    content: "";
+    width: 1px;
+    height: 24px;
+    background: var(--rule-strong);
+  }
+  .docs-link:hover {
+    color: var(--ink);
+  }
+</style>

@@ -1,0 +1,19 @@
+---
+// Replaces Starlight's social icons with a text link, like the landing nav's
+// "GitHub". Starlight shows it in the header, and on phones in the menu.
+import { REPO_URL } from "../../../site.config.mjs";
+---
+
+<a class="social-link" href={REPO_URL}>GitHub</a>
+
+<style>
+  .social-link {
+    color: var(--text-2);
+    font-size: 15px;
+    line-height: 1;
+    text-decoration: none;
+  }
+  .social-link:hover {
+    color: var(--ink);
+  }
+</style>

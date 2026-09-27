@@ -54,6 +54,12 @@ each one. That stops the site launching half-written.
 | `SITE_MODE=full npm run build` | Full production build. Fails until the placeholders are gone. |
 | `npm run preview`            | Serves `dist/` with `wrangler dev` at http://localhost:8787, the way Workers will. Build first. |
 
+Astro caches rendered Markdown in `node_modules/.astro`. After changing the
+Expressive Code settings in `astro.config.mjs` or `src/lib/ec-theme.mjs`,
+delete that directory before building. Otherwise docs pages can link to a
+code-block stylesheet that no longer exists. CI always starts without the
+cache.
+
 To check the local server the way CI does:
 
 ```sh
@@ -287,9 +293,10 @@ scripts/check-site.sh   checks a served site: home page, headers, robots rules, 
 scripts/smoke-test.sh   check-site and check-install against a deploy, with retries
 src/lib/mode.mjs        resolves SITE_MODE and SITE_ENV
 src/lib/build-hooks.mjs publishes /install, writes _headers and robots.txt, checks the output
+src/lib/ec-theme.mjs    the code-block colours for the docs (Expressive Code)
 src/pages/              404 (astro.config.mjs routes / to Holding or Landing)
 src/components/         Holding, Landing, OrbitArt, Terminal, InstallCommand, Mark, Starlight overrides
-src/content/docs/docs/  docs pages (full mode), served under /docs/
+src/content/docs/docs/  docs pages (full mode), served under /docs/; the sidebar is in astro.config.mjs
 src/styles/             fonts, tokens, global, placeholder and Starlight styles
 design/mockup.pdf       the design reference; see DESIGN.md
 ```

@@ -132,9 +132,9 @@ are places and the amber centre is the file spread across them (see
 - violet `r4.5` at `cx=39.5`
 
 The outer dots touch the grid edges. It is
-[`Mark.astro`](src/components/Mark.astro), `public/favicon.svg` and
-`src/assets/mark.svg` (the Starlight logo). It shows at 44px in the nav, 32px in
-the landing page's footer, and 50px next to the holding page's wordmark.
+[`Mark.astro`](src/components/Mark.astro) and `public/favicon.svg`. It shows at
+44px in the nav and the docs header, 32px in the landing page's footer, and
+50px next to the holding page's wordmark.
 
 **Wordmark.** "delocal" in lower case, set as described under
 [Type](#type), 14–18px after the mark. It is 24px in the nav and 56px on the
@@ -233,8 +233,7 @@ transition.
   - [`starlight.css`](src/styles/starlight.css) maps Starlight's colour and
     font variables onto our tokens.
 
-  Expressive Code uses one dark theme. The current sidebar item is an amber
-  button with `--bg` text.
+  How the docs look is under [Docs](#docs-full-mode).
 
 ## Holding page
 
@@ -350,6 +349,87 @@ Two-column sections stack under 900px.
 
 The mockup's captions "Final art: a Gemini illustration in this palette" and
 "[ART: …]" are notes to the designer, not copy.
+
+## Docs (full mode)
+
+Starlight, under `/docs/`, themed so it reads as the same site as the landing
+page. The pages are Markdown in
+[`src/content/docs/docs/`](src/content/docs/docs/), and the sidebar is set in
+[`astro.config.mjs`](astro.config.mjs):
+
+- **Start:** Introduction (`/docs/`), Install, Quick start
+- **Concepts:** How sync works, Safety, Tailscale
+- **Reference:** Commands, Files and folders, Troubleshooting
+
+**Copy.** The same rule as the landing page: page titles and sidebar labels
+name topics, so they are real, and so are structural headings such as
+Requirements and Uninstall.
+
+- Everything else is a placeholder: prose, headings, and each page's meta
+  description.
+- The only real command is the install command, in a code block on Install
+  and Quick start.
+- Where another command belongs, a line such as `[Placeholder command: the
+  command that …]` names what it does. There is no invented command or
+  output.
+
+**Placeholder headings** are Markdown headings,
+`## [Placeholder heading: …]`, so they keep their ids and appear under "On
+this page". Their ids start with `placeholder-heading-`, and `starlight.css`
+gives those the `.ph` look, as a full-width box with no anchor link.
+
+**Header.** It is 100px tall from Starlight's breakpoint (800px) up, with a
+full-width `--rule` bottom rule, as on the landing nav.
+- **Left:** the 44px mark and 24px wordmark, linking to `/`. Then a short
+  `--rule-strong` rule and "Docs" in 15px `--text-2`, linking to `/docs/`.
+  This is the [`SiteTitle`](src/components/starlight/SiteTitle.astro)
+  override.
+- **Middle:** Starlight's search, as a `--surface` box with a `--rule`
+  border and radius 10.
+- **Right:** "GitHub" as a 15px text link, from the
+  [`SocialIcons`](src/components/starlight/SocialIcons.astro) override.
+- **Under 800px:** one 64px row, with the mark and wordmark, "Docs", a
+  search icon and the menu button. GitHub moves into the menu.
+
+**Colour.** Backgrounds, rules and text use the tokens. By the colour rule,
+amber is only:
+- link underlines (link text is `--ink`);
+- the current sidebar item's marker;
+- focus rings;
+- the skip link.
+
+The current heading under "On this page" and search highlights stay neutral.
+
+**Type.**
+- **Headings:** Martian Mono at the heading settings. h1 is 40px, h2 28px,
+  h3 21px, and h1 and h2 scale down with `clamp()` to 30px and 24px.
+- **Body:** Atkinson Hyperlegible Next at 17px / 1.6.
+- **Code:** JetBrains Mono at 15px on 24px lines.
+- **Labels:** sidebar group labels and "On this page" are JetBrains Mono 13px
+  in `--muted`, like the landing page's step labels.
+
+**Sidebar.** Links are 15px `--text-2`. The current page has a quiet
+`--surface` background and a 2px amber marker on its left, not a filled
+block.
+
+**Code blocks** (Expressive Code) look like the install box:
+- `--terminal` background, a 1px `--rule` border and `--radius-install`
+  corners, with no shadow and no title bar;
+- a one-line block is 60px tall;
+- syntax colours are only `--ink`, `--text-2`, `--muted` and `--faint`,
+  from [`ec-theme.mjs`](src/lib/ec-theme.mjs), which holds hex copies of the
+  tokens.
+
+**The Copy button** is Expressive Code's own, restyled like InstallCommand's:
+- "Copy" in JetBrains Mono 14px on `--raised`, radius 8, 42px tall, and
+  always visible;
+- after a click it reads "Copied", and Expressive Code announces "Copied!"
+  in an aria-live region;
+- the label goes back after 1.5 seconds, Expressive Code's timing, rather
+  than InstallCommand's 2;
+- without JavaScript it is hidden.
+
+**Not shown:** no "Edit page" links and no last-updated dates.
 
 ## Decisions
 
