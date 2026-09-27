@@ -63,6 +63,14 @@ starting that PR.
 - **Smoke tests:** `scripts/smoke-test.sh` runs `check-site.sh` and
   `check-install.sh` against each deploy and preview, retrying for up to
   10 minutes.
+- **Zone features:** Cloudflare zone features can change pages at the edge
+  (Web Analytics, Rocket Loader, email obfuscation, Zaraz). Keep them off
+  for delocal.sh. `check-site.sh` is what enforces it: it fails when a page
+  loads anything from another host or from `/cdn-cgi/`.
+- **Daily check:** `.github/workflows/edge.yml` runs `check-site.sh` against
+  production every day, because a zone feature can switch on with no
+  deploy. It isn't a required check and deploys nothing. It reads the
+  workers.dev URL from the repo variable `WORKERS_DEV_URL`.
 - **Secrets:** `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, as repo
   secrets.
 - **Rollback:** see README.md.
