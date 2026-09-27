@@ -4,21 +4,29 @@
 //  2. Writes dist/_headers and dist/robots.txt for Cloudflare Workers.
 //  3. Checks the output matches the build mode (see verifyOutput). A
 //     production build also fails on placeholder copy and illustrative
-//     examples, naming each one.
+//     examples, naming each one. Every build checks the share image and the
+//     size of every image it serves.
 //
 // Any failed check throws, which fails the build.
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { copyFile, readdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SITE_URL } from "../../site.config.mjs";
+import { SHARE_IMAGE_URL } from "./share-image.mjs";
 
 const INSTALL_SCRIPT = fileURLToPath(new URL("../../install/install.sh", import.meta.url));
 
 // The Worker's name in wrangler.jsonc. Production is also served at
 // https://delocal-site.<account subdomain>.workers.dev.
 const WORKER_NAME = "delocal-site";
+
+// The share image, public/og.png (see art/README.md), and every other image
+// the site serves, such as the landing page's closing art in /_astro/.
+const SHARE_IMAGE = { file: "og.png", width: 1200, height: 630, maxBytes: 300 * 1024 };
+const MAX_IMAGE_BYTES = 150 * 1024;
+const IMAGE_FILE = /\.(avif|webp|png|jpe?g|gif)$/i;
 
 export default function buildHooks({ siteMode, siteEnv }) {
   return {
@@ -191,11 +199,18 @@ async function verifyOutput(outDir, siteMode, siteEnv) {
     problems.push("full build is missing docs/index.html");
   }
 
+  problems.push(...(await checkShareImage(outDir, files)));
+  for (const file of files.filter((f) => IMAGE_FILE.test(f) && f !== SHARE_IMAGE.file)) {
+    const { size } = await stat(path.join(outDir, file));
+    if (size > MAX_IMAGE_BYTES) problems.push(`${file} is ${kb(size)}, over the ${kb(MAX_IMAGE_BYTES)} limit for images`);
+  }
+
   for (const file of files.filter((f) => f.endsWith(".html") || f.endsWith(".css"))) {
     const text = await readFile(path.join(outDir, file), "utf8");
     for (const url of externalResources(text)) problems.push(`${file} loads ${url} from another host`);
     if (!file.endsWith(".html")) continue;
     problems.push(...checkIndexing(file, text));
+    problems.push(...checkShareMeta(file, text));
     problems.push(...checkOrbitArtIds(file, text));
     if (siteEnv === "production") {
       for (const name of placeholders(text)) problems.push(`${file} has placeholder copy: ${name}`);
@@ -244,6 +259,33 @@ function checkIndexing(file, html) {
   }
   if (noindex) problems.push(`${file} has a robots noindex meta tag`);
   return problems;
+}
+
+const kb = (bytes) => `${Math.round(bytes / 1024)} KB`;
+
+// og.png is a PNG of the right size, and small enough.
+async function checkShareImage(outDir, files) {
+  const { file, width, height, maxBytes } = SHARE_IMAGE;
+  if (!files.includes(file)) return [`the build has no ${file} (it comes from public/)`];
+  const data = await readFile(path.join(outDir, file));
+  const problems = [];
+  if (!data.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    return [`${file} is not a PNG`];
+  }
+  const size = [data.readUInt32BE(16), data.readUInt32BE(20)];
+  if (size[0] !== width || size[1] !== height) problems.push(`${file} is ${size.join("x")}, expected ${width}x${height}`);
+  if (data.length > maxBytes) problems.push(`${file} is ${kb(data.length)}, over the ${kb(maxBytes)} limit`);
+  return problems;
+}
+
+// Every page has exactly one og:image, the share image's absolute URL.
+function checkShareMeta(file, html) {
+  const images = [...html.matchAll(/<meta\b[^>]*>/gi)]
+    .map(([tag]) => tag)
+    .filter((tag) => /\sproperty\s*=\s*["']?og:image["'\s>/]/i.test(tag))
+    .map((tag) => /\scontent\s*=\s*(?:"([^"]*)"|'([^']*)')/i.exec(tag)?.slice(1).find((v) => v !== undefined) ?? "(no content)");
+  if (images.length === 1 && images[0] === SHARE_IMAGE_URL) return [];
+  return [`${file} has og:image ${images.join(", ") || "none"}, expected exactly one: ${SHARE_IMAGE_URL}`];
 }
 
 // Names each placeholder a page still has: <p class="ph">[Placeholder: ...]</p>,

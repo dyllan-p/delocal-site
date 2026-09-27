@@ -3,3 +3,6 @@ dist/
 dist-full/
 .wrangler/
 .astro/
+# Generated art candidates and the image budget tally (see art/README.md).
+art/candidates/
+art/.tally.json

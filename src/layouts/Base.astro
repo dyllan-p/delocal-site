@@ -5,6 +5,7 @@ import "../styles/tokens.css";
 import "../styles/global.css";
 import "../styles/placeholder.css";
 import { SITE_URL } from "../../site.config.mjs";
+import { shareImageMeta } from "../lib/share-image.mjs";
 
 interface Props {
   title: string;
@@ -25,6 +26,12 @@ const canonical = new URL(Astro.url.pathname, SITE_URL).href;
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {/* A noindex page, such as 404, is served at many addresses, so it has no og:url. */}
+    {!noindex && <meta property="og:url" content={canonical} />}
+    {shareImageMeta.map((attrs) => <meta {...attrs} />)}
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#14152a" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

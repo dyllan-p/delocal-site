@@ -20,6 +20,10 @@ visual reference. Where the two disagree, DESIGN.md and the tokens win.
   - Terminal examples are tagged "illustrative" and carry
     `data-illustrative`.
   - No stats, logos, testimonials or FAQ.
+- **Art is AI-generated** with Gemini. `art/README.md` records how. The
+  closing art and `public/og.png` come from `scripts/compose-art.mjs`, so
+  never edit them by hand. Generating needs `GEMINI_API_KEY`: never print
+  it, log it, write it to a file or put it on a command line.
 - **Everything self-hosted.** No third-party fonts, scripts or images at
   runtime. The build fails if a page or stylesheet loads one from another
   host.
@@ -106,7 +110,10 @@ In full mode:
   - anything loads from another host;
   - a page other than `404.html` lacks exactly one canonical link to
     `SITE_URL` plus its path, or `404.html` isn't noindex;
-  - `_headers` sets a header twice for any request.
+  - `_headers` sets a header twice for any request;
+  - `og.png` isn't a 1200x630 PNG of 300 KB or less, or another image is
+    over 150 KB;
+  - a page lacks exactly one `og:image`, `https://delocal.sh/og.png`.
 
 Workers joins the values of every `_headers` rule that matches a path. So
 never set one header in two rules whose paths overlap. `/*` overlaps

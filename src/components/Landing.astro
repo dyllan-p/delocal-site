@@ -4,7 +4,9 @@
 // repo links, the nav and the footer's line on the name. Everything that says
 // what delocal does is a placeholder, and the terminals are illustrative.
 // Both fail a production build until they are replaced (see DESIGN.md).
+import { Picture } from "astro:assets";
 import { REPO_URL } from "../../site.config.mjs";
+import closingArt from "../assets/closing-art.png";
 import Base from "../layouts/Base.astro";
 import InstallCommand from "./InstallCommand.astro";
 import Mark from "./Mark.astro";
@@ -120,7 +122,20 @@ const safetyTerminal: Line[] = [
           <p class="ph closing-line">[Placeholder: one line on building in the open]</p>
           <a class="button" href={REPO_URL}>Watch on GitHub</a>
         </div>
-        <div class="ph panel-art">[Placeholder art: three machines sharing one glowing cloud, in this palette]</div>
+        <div class="panel-art">
+          {/* Decorative. 528px wide at 1440; under 900px the panel is one column. */}
+          <Picture
+            src={closingArt}
+            formats={["avif", "webp"]}
+            fallbackFormat="webp"
+            widths={[528, 1056]}
+            quality={80}
+            sizes="(max-width: 899.98px) calc(100vw - 108px), 528px"
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
       </div>
     </section>
   </main>
@@ -387,12 +402,12 @@ const safetyTerminal: Line[] = [
   .panel-text .button {
     margin-top: 28px;
   }
-  .panel-art {
-    display: grid;
-    place-items: center;
-    min-height: 270px;
-    padding: 24px 48px;
-    text-align: center;
+  /* The art's edges are feathered into --raised, so it needs no frame. Its
+     width and height attributes keep the 2:1 space while it loads. */
+  .panel-art :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 
   /* ---- Footer ---- */
@@ -456,10 +471,6 @@ const safetyTerminal: Line[] = [
     }
     .closing {
       padding-top: var(--rhythm);
-    }
-    .panel-art {
-      min-height: 200px;
-      padding-inline: 24px;
     }
   }
 </style>

@@ -133,12 +133,13 @@ are places and the amber centre is the file spread across them (see
 
 The outer dots touch the grid edges. It is
 [`Mark.astro`](src/components/Mark.astro) and `public/favicon.svg`. It shows at
-44px in the nav and the docs header, 32px in the landing page's footer, and
-50px next to the holding page's wordmark.
+44px in the nav and the docs header, 32px in the landing page's footer,
+50px next to the holding page's wordmark, and about 103px in the share image
+(see [Art](#art)).
 
 **Wordmark.** "delocal" in lower case, set as described under
-[Type](#type), 14–18px after the mark. It is 24px in the nav and 56px on the
-holding page.
+[Type](#type), 14–18px after the mark. It is 24px in the nav, and 56px on the
+holding page and in the share image.
 
 **Status pill.** 1px `--rule-strong` border, fully round, an 8px amber dot,
 then 14–16px `--text-2` text.
@@ -210,6 +211,71 @@ None, except what answers a click, such as a "Copied" state on the Copy
 button. There is no transition on hover or scroll, and nothing animates on
 load. `prefers-reduced-motion: reduce` turns off any animation and
 transition.
+
+## Art
+
+The site has two illustrations, both AI-generated with Google's Gemini:
+- the closing band's art, on the landing page;
+- the share image, `/og.png`.
+
+[`art/README.md`](art/README.md) records how each was made and how to make
+more. Everywhere else the art is OrbitArt.
+
+**Style.**
+- A 1980s computer-magazine illustration of a night-time desk, printed in a
+  few flat inks with halftone dots and a little paper grain.
+- Cream machines drawn in off-white (`--ink`) line work, on the background
+  token.
+- No text, letters, numbers or anything letter-like, no logos or Apple
+  shapes, and no people.
+
+**Colour.** The colour rule holds in the art:
+- the laptop glows cyan, the desktop violet and the home server rose, as the
+  machines are coloured in the terminals;
+- amber is only the cloud of light drifting between them, the one thing
+  present on all three machines.
+
+**Edges.** The art has no frame. Its edges fall off to the page, and
+[`compose-art.mjs`](scripts/compose-art.mjs) feathers them into the exact
+token colour, so no seam shows.
+
+**Closing art.** [`src/assets/closing-art.png`](src/assets/closing-art.png),
+1056x528.
+- **Size:** it fills the closing band's right column at 2:1. That is 528x264
+  at 1440, and the full column width under 900px.
+- **Formats:** `<Picture>` serves AVIF and WebP at 528 and 1056 wide, at
+  quality 80. Lower smears the halftone dots.
+- **Loading:** it is lazy-loaded, and its width and height are set so the
+  layout doesn't shift.
+- **Alt text:** it is decorative, with `alt=""`.
+- **Size limit:** the build fails if any image the site serves is over
+  150 KB.
+
+**Share image.** [`public/og.png`](public/og.png), 1200x630.
+- **Size limit:** 300 KB or less. The build checks both the size and the
+  dimensions.
+- **Art:** the same desk as the closing art, scaled into x 580–1160 and
+  aligned right, so the left 45% stays calm.
+- **Mark and wordmark:** on the left at x 80, vertically centred, in the
+  nav's proportions: a 44px mark and a 16px gap beside a 24px wordmark.
+  Here that is a 56px wordmark.
+  - They are vector outlines, never drawn by the model.
+  - The image has no other words.
+- **Tags:** every page has one `og:image`, and the build checks it. Every
+  page carries these, from
+  [`src/lib/share-image.mjs`](src/lib/share-image.mjs):
+  - `og:image` and `twitter:image`, both `https://delocal.sh/og.png`;
+  - `og:image:width` and `og:image:height`;
+  - `og:image:alt` and `twitter:image:alt`, which describe the picture. Keep
+    them in step with the art.
+- **Other tags:** on our own pages, Base.astro also adds:
+  - `og:title`;
+  - `og:description`, which repeats the meta description, so the production
+    guard catches a placeholder in either;
+  - `og:url`, left off the noindex 404 page;
+  - `twitter:card` as `summary_large_image`.
+
+  On docs pages, Starlight adds its own versions of these.
 
 ## Implementation notes
 
@@ -328,7 +394,7 @@ the closing band. Terminals keep invented output and are illustrative.
      started, with no rule above it.
    - **Left:** h2 placeholder, a two-line placeholder, and the amber
      "Watch on GitHub" button, linking to the repo.
-   - **Right:** the art slot, a `.ph` box 270px tall.
+   - **Right:** the closing art, 528x264 at 1440. See [Art](#art).
 7. **Footer**
    - Rule above.
    - Left: a 32px mark and "delocal, named after a particle spread across
@@ -348,7 +414,8 @@ Two-column sections stack under 900px.
   sideways.
 
 The mockup's captions "Final art: a Gemini illustration in this palette" and
-"[ART: …]" are notes to the designer, not copy.
+"[ART: …]" are notes to the designer, not copy. The art they asked for is
+described under [Art](#art).
 
 ## Docs (full mode)
 
